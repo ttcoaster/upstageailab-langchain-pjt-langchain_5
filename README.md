@@ -35,6 +35,13 @@
 
 <br>
 
+## Upstage API Key 발급
+1. [Upstage AI Console](https://console.upstage.ai/docs/getting-started)에 접속합니다.
+2. 상단 **Dashboard** 를 클릭
+3. 좌측 메뉴에서 **API Key**를 선택합니다.
+4. **API Key 발급** 버튼을 클릭하여 키를 생성합니다.
+5. 발급된 API Key를 복사하여  `.env` 파일에 추가합니다. (env_template파일을 참고) (`UPSTAGE_API_KEY=발급받은_API_키`)
+
 ## ⚙️ UV 명령어 사용법
 ### UV 설치
 ```bash
