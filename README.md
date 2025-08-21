@@ -13,9 +13,9 @@
 
 ## 👨‍👩‍👦‍👦 팀 구성원
 
-| ![박패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![이패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![최패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![김패캠](https://avatars.githubusercontent.com/u/156163982?v=4) | ![오패캠](https://avatars.githubusercontent.com/u/156163982?v=4) |
+| ![류지헌](https://avatars.githubusercontent.com/u/156163982?v=4) | ![김태현](https://avatars.githubusercontent.com/u/156163982?v=4) | ![박진섭](https://avatars.githubusercontent.com/u/156163982?v=4) | ![문진숙](https://avatars.githubusercontent.com/u/156163982?v=4) | ![김재덕](https://avatars.githubusercontent.com/u/156163982?v=4) |
 | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: |
-|            [박패캠](https://github.com/UpstageAILab)             |            [이패캠](https://github.com/UpstageAILab)             |            [최패캠](https://github.com/UpstageAILab)             |            [김패캠](https://github.com/UpstageAILab)             |            [오패캠](https://github.com/UpstageAILab)             |
+|            [류지헌](https://github.com/UpstageAILab)             |            [김태현](https://github.com/UpstageAILab)             |            [박진섭](https://github.com/UpstageAILab)             |            [문진숙](https://github.com/UpstageAILab)             |            [김재덕](https://github.com/UpstageAILab)             |
 |                            팀장, 담당 역할                             |                            담당 역할                             |                            담당 역할                             |                            담당 역할                             |                            담당 역할                             |
 
 <br>
@@ -27,20 +27,39 @@
 
 <br>
 
+## ⚙️ UV 명령어 사용법
+### UV 설치
+```bash
+pip install uv
+```
+
+### 주요 명령어
+```bash
+# .py 파일 실행
+uv run code/baseline.py
+
+# .py 실행없이 의존성 패키지만 설치
+uv sync
+
+# 새 패키지 추가
+uv add 패키지명
+```
+
+<br>
+
 ## 📁 프로젝트 구조
 ```
-├── code
-│   ├── jupyter_notebooks
-│   │   └── model_train.ipynb
-│   └── train.py
-├── docs
-│   ├── pdf
-│   │   └── (Template) [패스트캠퍼스] Upstage AI Lab 1기_그룹 스터디 .pptx
-│   └── paper
-└── input
-    └── data
-        ├── eval
-        └── train
+├── code/
+│   ├── baseline.py           # RAG 시스템 기본 구현
+│   ├── baseline.ipynb        # RAG 시스템 노트북 버전
+│   └── env_template          # 환경 변수 템플릿
+├── data/
+│   ├── 4.단팥빵(비상스트레이트법).pdf
+│   └── SPRI_AI_Brief_2023년12월호_F.pdf
+├── pyproject.toml            # 프로젝트 의존성 관리 (UV)
+├── uv.lock                   # 의존성 버전 락 파일 (UV)
+├── CLAUDE.md                 # 프로젝트 지침
+└── README.md
 ```
 
 <br>
