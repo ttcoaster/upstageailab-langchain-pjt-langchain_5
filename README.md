@@ -31,7 +31,7 @@
   - PyMuPDF (PDF 처리)
   - python-dotenv (환경변수 관리)
 - 버전 및 이슈관리 : GitHub
-- 협업 툴 : GitHub, Notion
+- 협업 툴 : GitHub, Slack
 
 <br>
 
