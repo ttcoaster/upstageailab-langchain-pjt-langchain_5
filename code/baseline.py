@@ -10,13 +10,19 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_upstage import ChatUpstage
 from langchain_upstage import UpstageEmbeddings
  
+# 현재 스크립트 위치를 작업 디렉토리로 설정
+import sys
+from pathlib import Path
+script_dir = Path(__file__).parent.absolute()
+os.chdir(script_dir)
+
 # 환경변수 로드
 load_dotenv()
 
 
 # 단계 1: 문서 로드(Load Documents)
-loader = PyMuPDFLoader("data/SPRI_AI_Brief_2023년12월호_F.pdf")
-# loader = PyMuPDFLoader("data/4.단팥빵(비상스트레이트법).pdf")
+loader = PyMuPDFLoader("../data/SPRI_AI_Brief_2023년12월호_F.pdf")
+# loader = PyMuPDFLoader("../data/4.단팥빵(비상스트레이트법).pdf")
 docs = loader.load()
 
 # 단계 2: 문서 분할(Split Documents)
