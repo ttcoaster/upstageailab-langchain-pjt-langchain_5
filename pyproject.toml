@@ -1,0 +1,17 @@
+[project]
+name = "upstageailab-langchain-pjt-langchain-5"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10.13"
+dependencies = [
+    "faiss-cpu>=1.12.0",
+    "ipykernel>=6.30.1",
+    "langchain-community>=0.3.27",
+    "langchain-core>=0.3.74",
+    "langchain-openai>=0.3.30",
+    "langchain-text-splitters>=0.3.9",
+    "langchain-upstage>=0.7.2",
+    "pymupdf>=1.26.3",
+    "python-dotenv>=1.1.1",
+]

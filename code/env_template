@@ -1,0 +1,5 @@
+# Upstage API Key
+UPSTAGE_API_KEY=your_upstage_api_key_here
+
+# OpenAI API Key (선택사항)
+OPENAI_API_KEY=your_openai_api_key_here
