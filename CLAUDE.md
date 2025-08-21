@@ -1,0 +1,1 @@
+- pip 대신에 uv add 를 사용하고, python 대신에 uv run python 을 사용해라.
