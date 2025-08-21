@@ -13,9 +13,9 @@
 
 ## 👨‍👩‍👦‍👦 팀 구성원
 
-| ![류지헌](https://avatars.githubusercontent.com/u/156163982?v=4) | ![김태현](https://avatars.githubusercontent.com/u/156163982?v=4) | ![박진섭](https://avatars.githubusercontent.com/u/156163982?v=4) | ![문진숙](https://avatars.githubusercontent.com/u/156163982?v=4) | ![김재덕](https://avatars.githubusercontent.com/u/156163982?v=4) |
+| ![류지헌](https://avatars.githubusercontent.com/u/10584296?v=4) | ![김태현](https://avatars.githubusercontent.com/u/7031901?v=4) | ![박진섭](https://avatars.githubusercontent.com/u/208775216?v=4) | ![문진숙](https://avatars.githubusercontent.com/u/204665219?v=4) | ![김재덕](https://avatars.githubusercontent.com/u/33456585?v=4) |
 | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: |
-|            [류지헌](https://github.com/UpstageAILab)             |            [김태현](https://github.com/UpstageAILab)             |            [박진섭](https://github.com/UpstageAILab)             |            [문진숙](https://github.com/UpstageAILab)             |            [김재덕](https://github.com/UpstageAILab)             |
+|            [류지헌](https://github.com/mahomi)             |            [김태현](https://github.com/huefilm)             |            [박진섭](https://github.com/seob1504)             |            [문진숙](https://github.com/June3723)             |            [김재덕](https://github.com/ttcoaster)             |
 |                            팀장, 담당 역할                             |                            담당 역할                             |                            담당 역할                             |                            담당 역할                             |                            담당 역할                             |
 
 <br>
