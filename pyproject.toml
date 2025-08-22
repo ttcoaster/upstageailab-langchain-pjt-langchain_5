@@ -14,4 +14,5 @@ dependencies = [
     "langchain-upstage>=0.7.2",
     "pymupdf>=1.26.3",
     "python-dotenv>=1.1.1",
+    "pytz>=2025.2",
 ]
