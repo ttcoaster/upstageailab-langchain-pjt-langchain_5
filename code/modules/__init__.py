@@ -23,6 +23,7 @@ from .llm import LLMManager
 from .retriever import RetrieverManager
 from .chat_history import ChatHistoryManager
 from .crawler import CrawlerManager
+from .rag_system import RAGSystemInitializer, RAGQueryProcessor
 
 __all__ = [
     "SQLManager",
@@ -32,4 +33,6 @@ __all__ = [
     "RetrieverManager",
     "ChatHistoryManager",
     "CrawlerManager",
+    "RAGSystemInitializer",
+    "RAGQueryProcessor",
 ]

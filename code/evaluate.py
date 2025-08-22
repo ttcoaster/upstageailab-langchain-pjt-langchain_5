@@ -35,7 +35,6 @@ load_dotenv(script_dir / '.env')
 
 # LangChain 및 Upstage imports
 from langchain_upstage import UpstageEmbeddings
-from langchain.memory import ConversationBufferWindowMemory
 
 # RAGAS imports (Upstage API 사용)
 from ragas import evaluate
@@ -50,165 +49,85 @@ from datasets import Dataset
 # 모듈 imports
 from modules import (
     VectorStoreManager, LLMManager, RetrieverManager, 
-    ChatHistoryManager, LoggerManager
+    ChatHistoryManager, LoggerManager, RAGSystemInitializer, RAGQueryProcessor
 )
 
 
+# 전역 설정
+project_root = script_dir.parent
+dataset_path = project_root / "data" / "eval" / "question_dataset.json"
+results_dir = project_root / "data" / "eval" / "evaluation_results"
+
+def setup_upstage_for_ragas():
+    """RAGAS에서 Upstage API를 사용하도록 환경변수 설정"""
+    upstage_api_key = os.getenv("UPSTAGE_API_KEY")
+    if upstage_api_key:
+        os.environ["OPENAI_API_KEY"] = upstage_api_key
+        os.environ["OPENAI_BASE_URL"] = "https://api.upstage.ai/v1"
+        os.environ["OPENAI_MODEL_NAME"] = "solar-pro2"
+
+
+
+
 class RAGEvaluator:
-    """RAG 시스템 품질 평가 클래스"""
+    """RAG 시스템 품질 평가를 위한 클래스"""
     
     def __init__(self):
-        """RAGEvaluator 초기화"""
         self.logger = LoggerManager("RAGEvaluator")
-        self.project_root = script_dir.parent
-        self.dataset_path = self.project_root / "data" / "eval" / "question_dataset.json"
-        self.results_dir = self.project_root / "data" / "eval" / "evaluation_results"
+        self.results_dir = results_dir
         
-        # RAGAS에서 Upstage API 사용하도록 환경변수 설정
-        self._setup_upstage_for_ragas()
-        
-        # 시스템 컴포넌트
-        self.vector_manager = None
-        self.llm_manager = None
-        self.retriever_manager = None
-        self.chat_history_manager = None
-        
-        self.logger.log_success("RAG Evaluator 초기화 완료")
-    
-    def _setup_upstage_for_ragas(self):
-        """RAGAS에서 Upstage API를 사용하도록 환경변수 설정"""
-        try:
-            # OpenAI 환경변수를 Upstage API로 설정
-            upstage_api_key = os.getenv("UPSTAGE_API_KEY")
-            if upstage_api_key:
-                os.environ["OPENAI_API_KEY"] = upstage_api_key
-                os.environ["OPENAI_BASE_URL"] = "https://api.upstage.ai/v1"
-                
-                # RAGAS가 사용하는 기본 모델을 Upstage 모델로 매핑
-                # baseline.py에서 사용하는 모델명과 동일하게 설정
-                os.environ["OPENAI_MODEL_NAME"] = "solar-pro2"
-                
-                self.logger.log_step("RAGAS Upstage 설정", "OpenAI 환경변수를 Upstage API로 리다이렉트 (모델: solar-pro2)")
-            else:
-                self.logger.log_warning("UPSTAGE_API_KEY not found", "RAGAS 평가에 문제가 발생할 수 있습니다")
-        except Exception as e:
-            self.logger.log_error("RAGAS Upstage 설정", e)
+        # 결과 디렉토리 생성
+        self.results_dir.mkdir(parents=True, exist_ok=True)
     
     def load_evaluation_dataset(self) -> Dict[str, Any]:
         """평가 데이터셋 로드"""
-        self.logger.log_function_start("load_evaluation_dataset")
-        
-        try:
-            with open(self.dataset_path, 'r', encoding='utf-8') as f:
-                dataset = json.load(f)
-            
-            self.logger.log_function_end("load_evaluation_dataset", 
-                                       f"{dataset['metadata']['total_questions']}개 질문 로드")
-            return dataset
-        
-        except Exception as e:
-            self.logger.log_error("load_evaluation_dataset", e)
-            raise
+        with open(dataset_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
     
-    def initialize_system(self) -> bool:
-        """WebUI와 동일한 시스템 초기화"""
-        self.logger.log_function_start("initialize_system")
+    def initialize_system(self):
+        """RAG 시스템 초기화"""
+        result = RAGSystemInitializer.initialize_system(
+            current_file_path=script_dir,
+            include_sql=False,
+            logger_name="EvaluationRAG",
+            enable_db_memory=False  # 평가용은 메모리만 사용
+        )
         
-        try:
-            # 임베딩 모델 초기화
-            self.logger.log_step("임베딩 모델 초기화")
-            embeddings = UpstageEmbeddings(
-                api_key=os.getenv("UPSTAGE_API_KEY"),
-                model="embedding-query"
-            )
-            
-            # 벡터스토어 관리자 초기화 (절대 경로 사용)
-            self.logger.log_step("벡터스토어 관리자 초기화")
-            pdf_dir = str(self.project_root / "data" / "pdf")
-            vectorstore_dir = str(self.project_root / "data" / "vectorstore")
-            
-            self.vector_manager = VectorStoreManager(
-                pdf_dir=pdf_dir,
-                vectorstore_dir=vectorstore_dir, 
-                embeddings=embeddings,
-                chunk_size=1000,
-                chunk_overlap=50
-            )
-            
-            # 벡터스토어 로드/생성
-            self.logger.log_step("벡터스토어 로드/생성")
-            vectorstore = self.vector_manager.get_or_create_vectorstore()
-            
-            if vectorstore is None:
-                self.logger.log_error_with_icon("벡터스토어를 생성하거나 로드할 수 없습니다.")
-                return False
-            
-            # LLM 관리자 초기화
-            self.logger.log_step("LLM 관리자 초기화")
-            self.llm_manager = LLMManager()
-            
-            # 검색기 관리자 초기화
-            self.logger.log_step("검색기 관리자 초기화")
-            self.retriever_manager = RetrieverManager(vectorstore=vectorstore)
-            
-            # 채팅 히스토리 관리자 초기화 (메모리만, DB 저장 안함)
-            self.logger.log_step("채팅 히스토리 관리자 초기화")
-            self.chat_history_manager = ChatHistoryManager(
-                session_id=None,
-                sql_manager=None,
-                auto_save=False
-            )
-            
-            self.logger.log_function_end("initialize_system", "모든 컴포넌트 초기화 완료")
-            return True
-            
-        except Exception as e:
-            self.logger.log_error("initialize_system", e)
+        if result is None:
             return False
+        
+        self.vector_manager, self.llm_manager, self.retriever_manager, self.query_processor = result
+        return True
     
     def process_questions(self, dataset: Dict[str, Any]) -> List[Dict[str, Any]]:
         """질문들을 처리하고 답변 생성"""
-        self.logger.log_function_start("process_questions", 
-                                     count=len(dataset["questions"]))
-        
         results = []
         questions = dataset["questions"]
         
         for i, question_data in enumerate(questions, 1):
-            self.logger.log_step(f"질문 {i}/{len(questions)} 처리", 
-                               question_data["question"][:50] + "...")
-            
             start_time = time.time()
             
             try:
-                # 질문 처리 (WebUI와 동일한 흐름)
                 question = question_data["question"]
                 
-                # 1. 문서 검색
-                documents = self.retriever_manager.search_documents(question)
-                context = self.retriever_manager.format_documents_for_context(documents)
-                
-                # 2. 채팅 히스토리 가져오기
-                chat_history = self.chat_history_manager.get_chat_history_as_dicts()
-                
-                # 3. LLM 응답 생성
-                response = self.llm_manager.generate_response(
+                # 자동 메모리 기능이 포함된 간단한 질의 처리 사용
+                result = self.query_processor.query(
                     question=question,
-                    context=context,
-                    chat_history=chat_history
+                    return_sources=True
                 )
                 
-                # 4. 메모리에 대화 추가 (DB 저장 안함)
-                self.chat_history_manager.add_conversation_pair(question, response)
+                if not result["success"]:
+                    raise Exception(result["error"])
                 
-                # 5. 검색된 문서 소스 정보 추출
-                source_documents = self.retriever_manager.get_unique_sources(documents)
+                response = result["response"]
+                documents = result.get("documents", [])
+                source_documents = result.get("sources", [])
                 contexts = [doc.page_content for doc in documents]
                 
                 processing_time = (time.time() - start_time) * 1000  # ms
                 
                 # 결과 저장
-                result = {
+                results.append({
                     "question_id": question_data["id"],
                     "question": question,
                     "generated_answer": response,
@@ -221,14 +140,9 @@ class RAGEvaluator:
                     "processing_time_ms": round(processing_time, 2),
                     "depends_on": question_data.get("depends_on"),
                     "keywords": question_data.get("keywords", [])
-                }
-                
-                results.append(result)
-                
-                self.logger.log_success(f"질문 {i} 처리 완료 ({processing_time:.0f}ms)")
+                })
                 
             except Exception as e:
-                self.logger.log_error(f"질문 {i} 처리", e)
                 # 실패한 경우에도 빈 결과 추가
                 results.append({
                     "question_id": question_data["id"],
@@ -244,7 +158,6 @@ class RAGEvaluator:
                     "error": str(e)
                 })
         
-        self.logger.log_function_end("process_questions", f"{len(results)}개 질문 처리 완료")
         return results
     
     def run_ragas_evaluation(self, results: List[Dict[str, Any]]) -> Dict[str, float]:
@@ -492,16 +405,25 @@ class RAGEvaluator:
 def main():
     """메인 함수"""
     print("🚀 RAG 시스템 품질 평가 CLI")
-    print("WebUI와 동일한 RAG 방식으로 RAGAS 메트릭 평가를 수행합니다.\n")
+    print("WebUI와 동일한 RAG 방식으로 평가를 수행합니다.\n")
     
-    evaluator = RAGEvaluator()
-    success = evaluator.run_evaluation()
-    
-    if success:
-        print("\n✅ 평가가 성공적으로 완료되었습니다!")
-        return 0
-    else:
-        print("\n❌ 평가 중 오류가 발생했습니다.")
+    try:
+        # RAGAS 설정
+        setup_upstage_for_ragas()
+        
+        # 평가기 생성 및 실행
+        evaluator = RAGEvaluator()
+        success = evaluator.run_evaluation()
+        
+        if success:
+            print("\n✅ 평가가 성공적으로 완료되었습니다!")
+            return 0
+        else:
+            print("\n❌ 평가 중 오류가 발생했습니다.")
+            return 1
+            
+    except Exception as e:
+        print(f"\n❌ 평가 중 오류 발생: {str(e)}")
         return 1
 
 

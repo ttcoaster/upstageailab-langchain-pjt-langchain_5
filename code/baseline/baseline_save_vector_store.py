@@ -11,7 +11,7 @@ script_dir = Path(__file__).parent.absolute()
 os.chdir(script_dir)
 
 import sys; sys.path.append('../');
-import utils.log_util as log
+import modules.logger as log
 from vector_store import VectorStoreManager
 
 # 환경변수 로드

@@ -1,59 +1,137 @@
+# -*- coding: utf-8 -*-
 """
-로깅 관리 모듈
-
-이 모듈은 기존 utils/log_util.py의 기능을 클래스 기반으로 래핑하여
-모듈화된 구조에서 사용할 수 있도록 합니다.
-
-주요 기능:
-1. 기존 log_util.py 기능 래핑
-2. 클래스 기반 로깅 인터페이스 제공
-3. 모듈별 로그 파일 관리
+로그 유틸리티. import한 "스크립트명.log" 파일에 로그 출력.
+사용법:
+import modules.logger as log
+# log.change_file_mode("a") # 기본 모드는 "w"(덮어쓰기) 이지만 "a"(추가)로 변경가능.
+log.info("로그 메시지 출력")
 """
 
 import os
-import sys
-from pathlib import Path
+import logging
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
-# 상위 디렉토리의 utils 모듈을 import하기 위한 경로 추가
-sys.path.append(str(Path(__file__).parent.parent))
 
-try:
-    import utils.log_util as log
-except ImportError:
-    # utils 모듈을 찾을 수 없는 경우 기본 로깅 사용
-    import logging
+class CustomFormatter(logging.Formatter):
+    """한국 시간대(UTC+9)로 로그 포맷을 설정하는 커스텀 포매터"""
+    def format(self, record):
+        # UTC+9 서울 타임존 설정
+        kst = timezone(timedelta(hours=9))
+        timestamp = datetime.fromtimestamp(record.created, tz=kst).strftime("%y-%m-%d %H:%M:%S")
+        return f"[{timestamp}] [INFO] {record.getMessage()}"
+
+
+def setup_logger(script_file_path=None, file_mode="w"):
+    """
+    로거를 설정하고 반환합니다.
     
-    class BasicLogger:
-        def __init__(self):
-            self.logger = logging.getLogger(__name__)
-            self.logger.setLevel(logging.INFO)
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter('[%(asctime)s] [INFO] %(message)s')
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
-        
-        def info(self, *args):
-            message = ' '.join(str(arg) for arg in args)
-            self.logger.info(message)
-        
-        def debug(self, *args):
-            message = ' '.join(str(arg) for arg in args)
-            self.logger.debug(message)
-        
-        def warning(self, *args):
-            message = ' '.join(str(arg) for arg in args)
-            self.logger.warning(message)
-        
-        def error(self, *args):
-            message = ' '.join(str(arg) for arg in args)
-            self.logger.error(message)
-        
-        def critical(self, *args):
-            message = ' '.join(str(arg) for arg in args)
-            self.logger.critical(message)
+    Args:
+        script_file_path (str, optional): 스크립트 파일 경로. None이면 현재 실행중인 스크립트 경로 사용
+        file_mode (str): 파일 핸들러 모드 ("w", "a" 등)
     
-    log = BasicLogger()
+    Returns:
+        logging.Logger: 설정된 로거 객체
+    """
+    # 로거 설정
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    
+    # 기존 핸들러가 있다면 제거 (중복 방지)
+    if logger.handlers:
+        logger.handlers.clear()
+    
+    # 콘솔 핸들러
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(CustomFormatter())
+    
+    # 파일 핸들러 (스크립트명.log로 저장)
+    if script_file_path is None:
+        import sys
+        # __main__ 모듈의 __file__ 속성을 사용하여 실제 실행중인 스크립트 경로 얻기
+        import __main__
+        if hasattr(__main__, '__file__'):
+            script_file_path = __main__.__file__
+        else:
+            script_file_path = sys.argv[0] if sys.argv[0] else __file__
+    
+    # 절대 경로로 변환
+    script_file_path = os.path.abspath(script_file_path)
+    script_name = os.path.splitext(os.path.basename(script_file_path))[0]
+    script_dir = os.path.dirname(script_file_path)
+    
+    # 로그 파일이 logger.py의 이름으로 저장되는 것을 방지
+    if script_name == 'logger':
+        import __main__
+        if hasattr(__main__, '__file__'):
+            main_script_path = os.path.abspath(__main__.__file__)
+            script_name = os.path.splitext(os.path.basename(main_script_path))[0]
+            script_dir = os.path.dirname(main_script_path)
+    
+    log_file_path = os.path.join(script_dir, f"{script_name}.log")
+    
+    # 로그 파일의 디렉토리가 없으면 생성
+    log_dir = os.path.dirname(log_file_path)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+    
+    file_handler = logging.FileHandler(log_file_path, mode=file_mode, encoding='utf-8')
+    file_handler.setFormatter(CustomFormatter())
+    
+    # 핸들러 추가
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+    logger.propagate = False
+    
+    return logger
+
+
+# 모듈 로드 시 자동으로 로거 초기화 (스크립트 파일 경로 자동 감지, 기본 모드 "w")
+_logger = setup_logger()
+_current_script_path = None
+_current_file_mode = "w"
+
+# 모듈 레벨에서 로그 메서드들을 직접 노출
+def info(*args):
+    message = ' '.join(str(arg) for arg in args)
+    _logger.info(message)
+
+def debug(*args):
+    message = ' '.join(str(arg) for arg in args)
+    _logger.debug(message)
+
+def warning(*args):
+    message = ' '.join(str(arg) for arg in args)
+    _logger.warning(message)
+
+def error(*args):
+    message = ' '.join(str(arg) for arg in args)
+    _logger.error(message)
+
+def critical(*args):
+    message = ' '.join(str(arg) for arg in args)
+    _logger.critical(message)
+
+# 로거 객체도 직접 노출 (필요시 사용)
+logger = _logger
+
+
+def change_file_mode(file_mode):
+    """
+    파일 핸들러의 모드를 변경합니다.
+    
+    Args:
+        file_mode (str): 새로운 파일 모드 ("w", "a" 등)
+    """
+    global _logger, logger, _current_script_path, _current_file_mode
+    
+    _current_file_mode = file_mode
+    
+    # 현재 스크립트 경로가 설정되어 있으면 그것을 사용, 없으면 기본값 사용
+    script_path = _current_script_path if _current_script_path else None
+    
+    _logger = setup_logger(script_path, file_mode)
+    logger = _logger 
 
 
 class LoggerManager:
@@ -70,49 +148,48 @@ class LoggerManager:
         self.module_name = module_name or "module"
         self.file_mode = file_mode
         
-        # 기존 log_util 설정 변경 (필요시)
-        if hasattr(log, 'change_file_mode'):
-            log.change_file_mode(file_mode)
+        # 기존 logger 설정 변경 (필요시)
+        change_file_mode(file_mode)
     
     def info(self, *args):
         """정보 레벨 로그"""
         if self.module_name:
             message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
-            log.info(message)
+            info(message)
         else:
-            log.info(*args)
+            info(*args)
     
     def debug(self, *args):
         """디버그 레벨 로그"""
         if self.module_name:
             message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
-            log.debug(message)
+            debug(message)
         else:
-            log.debug(*args)
+            debug(*args)
     
     def warning(self, *args):
         """경고 레벨 로그"""
         if self.module_name:
             message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
-            log.warning(message)
+            warning(message)
         else:
-            log.warning(*args)
+            warning(*args)
     
     def error(self, *args):
         """오류 레벨 로그"""
         if self.module_name:
             message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
-            log.error(message)
+            error(message)
         else:
-            log.error(*args)
+            error(*args)
     
     def critical(self, *args):
         """심각한 오류 레벨 로그"""
         if self.module_name:
             message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
-            log.critical(message)
+            critical(message)
         else:
-            log.critical(*args)
+            critical(*args)
     
     def log_function_start(self, function_name: str, **kwargs):
         """함수 시작 로그"""
@@ -151,5 +228,5 @@ class LoggerManager:
     
     @staticmethod
     def get_global_logger():
-        """전역 로거 반환 (기존 log_util 호환성)"""
-        return log
+        """전역 로거 반환 (기존 호환성)"""
+        return _logger

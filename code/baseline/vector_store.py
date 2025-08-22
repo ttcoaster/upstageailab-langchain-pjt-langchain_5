@@ -32,7 +32,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import DirectoryLoader, PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_upstage import UpstageEmbeddings
-import utils.log_util as log
+import modules.logger as log
 
 
 class VectorStoreManager:

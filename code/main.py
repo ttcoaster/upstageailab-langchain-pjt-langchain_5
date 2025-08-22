@@ -25,7 +25,8 @@ if str(script_dir) not in sys.path:
 # 모듈 import
 from modules import (
     SQLManager, VectorStoreManager, 
-    LLMManager, RetrieverManager, ChatHistoryManager
+    LLMManager, RetrieverManager, ChatHistoryManager,
+    RAGSystemInitializer, RAGQueryProcessor
 )
 
 # 환경변수 로드 (스크립트 디렉토리 기준)
@@ -73,49 +74,18 @@ st.markdown("""
 
 @st.cache_resource
 def initialize_system():
-    """시스템 초기화 (캐시됨)"""
-    try:
-        # 임베딩 모델 초기화
-        embeddings = UpstageEmbeddings(
-            api_key=os.getenv("UPSTAGE_API_KEY"),
-            model="embedding-query"
-        )
-        
-        # 벡터스토어 관리자 초기화 (절대 경로 사용)
-        current_dir = Path(__file__).parent.absolute()
-        pdf_dir = str(current_dir.parent / "data" / "pdf")
-        vectorstore_dir = str(current_dir.parent / "data" / "vectorstore")
-        
-        vector_manager = VectorStoreManager(
-            pdf_dir=pdf_dir,
-            vectorstore_dir=vectorstore_dir, 
-            embeddings=embeddings,
-            chunk_size=1000,
-            chunk_overlap=50
-        )
-        
-        # 벡터스토어 로드/생성
-        vectorstore = vector_manager.get_or_create_vectorstore()
-        
-        if vectorstore is None:
-            st.error("벡터스토어를 생성하거나 로드할 수 없습니다.")
-            return None, None, None, None
-        
-        # LLM 관리자 초기화
-        llm_manager = LLMManager()
-        
-        # 검색기 관리자 초기화
-        retriever_manager = RetrieverManager(vectorstore=vectorstore)
-        
-        # SQL 관리자 초기화 (절대 경로 사용)
-        db_path = str(current_dir.parent / "data" / "chat.db")
-        sql_manager = SQLManager(db_path=db_path)
-        
-        return vector_manager, llm_manager, retriever_manager, sql_manager
+    """시스템 초기화 (캐시됨) - 공통 모듈 사용"""
+    result = RAGSystemInitializer.initialize_system(
+        current_file_path=Path(__file__).parent,
+        include_sql=True,
+        logger_name="StreamlitRAG"
+    )
     
-    except Exception as e:
-        st.error(f"시스템 초기화 오류: {str(e)}")
+    if result is None:
+        st.error("시스템 초기화에 실패했습니다.")
         return None, None, None, None
+    
+    return result
 
 
 def initialize_session_state():
@@ -130,7 +100,7 @@ def initialize_session_state():
         st.session_state.chat_history_manager = None
     
     if "show_sources" not in st.session_state:
-        st.session_state.show_sources = False
+        st.session_state.show_sources = True
 
 
 def create_new_conversation(sql_manager):
@@ -299,9 +269,9 @@ def render_sidebar(sql_manager):
         st.subheader("⚙️ 설정")
         
         # 소스 표시 토글
-        st.session_state.show_sources = st.checkbox(
+        st.checkbox(
             "검색된 문서 소스 표시", 
-            value=st.session_state.show_sources
+            key="show_sources"
         )
         
         # 시스템 정보
@@ -401,11 +371,11 @@ def main():
     initialize_session_state()
     
     # 시스템 초기화
-    vector_manager, llm_manager, retriever_manager, sql_manager = initialize_system()
-    
-    if not all([vector_manager, llm_manager, retriever_manager, sql_manager]):
-        st.error("시스템 초기화에 실패했습니다.")
+    result = initialize_system()
+    if not result:
         return
+    
+    vector_manager, llm_manager, retriever_manager, sql_manager, query_processor = result
     
     # UI 렌더링
     render_sidebar(sql_manager)
