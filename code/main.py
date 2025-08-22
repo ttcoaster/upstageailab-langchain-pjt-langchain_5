@@ -1,146 +1,345 @@
+"""
+Streamlit Chat WebUI
+
+LangChain 기반 RAG 시스템을 위한 Streamlit 웹 인터페이스입니다.
+
+주요 기능:
+- 채팅 인터페이스
+- 대화 히스토리 관리
+- 설정 패널
+- 문서 검색 및 응답 생성
+
+Author: AI Assistant
+Date: 2025-08-22
+"""
+
 import os
-from dotenv import load_dotenv
-from vector_store import VectorStoreManager
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.memory import ConversationBufferWindowMemory
-from langchain_upstage import ChatUpstage
-from langchain_upstage import UpstageEmbeddings
-import utils.log_util as log
-import datetime
-import pytz
- 
-# 현재 스크립트 위치를 작업 디렉토리로 설정
+import sys
+import streamlit as st
 from pathlib import Path
+from dotenv import load_dotenv
+from langchain_upstage import UpstageEmbeddings
+
+# 현재 스크립트의 디렉토리를 sys.path에 추가 (chdir 대신)
 script_dir = Path(__file__).parent.absolute()
-os.chdir(script_dir)
+if str(script_dir) not in sys.path:
+    sys.path.insert(0, str(script_dir))
 
-# 환경변수 로드
-load_dotenv()
-log.info("환경변수가 성공적으로 로드되었습니다.")
-
-
-# 단계 1-3: 임베딩(Embedding) 생성
-log.info("임베딩 모델을 초기화하는 중...")
-embeddings = UpstageEmbeddings(
-    api_key=os.getenv("UPSTAGE_API_KEY"),
-    model="embedding-query"
-)
-log.info("임베딩 모델이 성공적으로 초기화되었습니다.")
-
-# 단계 4: 벡터스토어 관리자 생성 및 벡터스토어 로드/생성
-log.info("벡터스토어 관리자를 초기화하는 중...")
-vector_manager = VectorStoreManager(
-    pdf_dir="../data/pdf",
-    vectorstore_dir="../data/vectorstore", 
-    embeddings=embeddings,
-    chunk_size=1000,
-    chunk_overlap=50
+# 모듈 import
+from modules import (
+    SQLManager, LoggerManager, VectorStoreManager, 
+    LLMManager, RetrieverManager, ChatHistoryManager, CrawlerManager
 )
 
-# 벡터스토어 가져오기 (기존 로드 또는 새로 생성, 증분 업데이트 자동 처리)
-vectorstore = vector_manager.get_or_create_vectorstore()
+# 환경변수 로드 (스크립트 디렉토리 기준)
+load_dotenv(script_dir / '.env')
 
-if vectorstore is None:
-    log.error("벡터스토어를 생성하거나 로드할 수 없습니다.")
-    exit(1)
-
-# 단계 5: 검색기(Retriever) 생성
-retriever = vectorstore.as_retriever()
-log.info("벡터 데이터베이스와 검색기가 성공적으로 생성되었습니다.")
-
-# 단계 6: 프롬프트 생성(Create Prompt)
-# 현재 국가 로케일 기준의 날짜와 시간
-tz = pytz.timezone("Asia/Seoul")
-nowTime = datetime.datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S')
-
-# 메모리 기능을 포함한 프롬프트를 생성합니다.
-prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are an assistant for question-answering tasks. 
-Use the following pieces of retrieved context to answer the question. 
-If you don't know the answer, just say that you don't know. 
-Answer in Korean. The current time is {nowTime}.
-
-Context: {context}"""),
-    MessagesPlaceholder(variable_name="chat_history"),
-    ("human", "{question}")
-])
-log.info(f"프롬프트 템플릿이 생성되었습니다. 현재시각: {nowTime}")
-
-# 단계 7: 언어모델(LLM) 생성
-log.info("언어모델을 초기화하는 중...")
-llm = ChatUpstage(
-    api_key=os.getenv("UPSTAGE_API_KEY"),
-    model="solar-pro2",
-    reasoning_effort="high"
-)
-log.info("언어모델이 성공적으로 초기화되었습니다.")
-
-# 단계 7-1: 메모리 생성 (최근 3개 대화 저장)
-memory = ConversationBufferWindowMemory(
-    k=3,  # 최근 3개 대화만 기억
-    memory_key="chat_history",
-    return_messages=True,
-    output_key="answer"
+# 페이지 설정
+st.set_page_config(
+    page_title="RAG Chat Assistant",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
+# CSS 스타일링
+st.markdown("""
+<style>
+    .chat-message {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+    .user-message {
+        background-color: #f0f2f6;
+        margin-left: 20%;
+    }
+    .assistant-message {
+        background-color: #e8f4fd;
+        margin-right: 20%;
+    }
+    .message-header {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .stApp > header {
+        background-color: transparent;
+    }
+    .stApp {
+        margin-top: -80px;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# 단계 8: 체인(Chain) 생성 - 메모리 기능 포함
-def create_rag_chain_with_memory():
-    def format_docs(docs):
-        return "\n\n".join(doc.page_content for doc in docs)
-    
-    # RAG 체인과 메모리를 결합하는 함수
-    def rag_with_memory(question):
-        # 검색된 문서 가져오기
-        docs = retriever.invoke(question)
-        context = format_docs(docs)
-        
-        # 메모리에서 채팅 기록 가져오기
-        chat_history = memory.chat_memory.messages
-        
-        # 프롬프트에 필요한 변수들 준비
-        formatted_prompt = prompt.format_messages(
-            context=context,
-            chat_history=chat_history,
-            question=question,
-            nowTime=nowTime
+
+@st.cache_resource
+def initialize_system():
+    """시스템 초기화 (캐시됨)"""
+    try:
+        # 임베딩 모델 초기화
+        embeddings = UpstageEmbeddings(
+            api_key=os.getenv("UPSTAGE_API_KEY"),
+            model="embedding-query"
         )
         
-        # LLM 호출
-        response = llm.invoke(formatted_prompt)
+        # 벡터스토어 관리자 초기화 (절대 경로 사용)
+        current_dir = Path(__file__).parent.absolute()
+        pdf_dir = str(current_dir.parent / "data" / "pdf")
+        vectorstore_dir = str(current_dir.parent / "data" / "vectorstore")
         
-        # 메모리에 대화 저장
-        memory.save_context({"input": question}, {"answer": response.content})
+        vector_manager = VectorStoreManager(
+            pdf_dir=pdf_dir,
+            vectorstore_dir=vectorstore_dir, 
+            embeddings=embeddings,
+            chunk_size=1000,
+            chunk_overlap=50
+        )
         
-        return response.content
+        # 벡터스토어 로드/생성
+        vectorstore = vector_manager.get_or_create_vectorstore()
+        
+        if vectorstore is None:
+            st.error("벡터스토어를 생성하거나 로드할 수 없습니다.")
+            return None, None, None, None
+        
+        # LLM 관리자 초기화
+        llm_manager = LLMManager()
+        
+        # 검색기 관리자 초기화
+        retriever_manager = RetrieverManager(vectorstore=vectorstore)
+        
+        # SQL 관리자 초기화 (절대 경로 사용)
+        db_path = str(current_dir.parent / "data" / "chat.db")
+        sql_manager = SQLManager(db_path=db_path)
+        
+        return vector_manager, llm_manager, retriever_manager, sql_manager
     
-    return rag_with_memory
+    except Exception as e:
+        st.error(f"시스템 초기화 오류: {str(e)}")
+        return None, None, None, None
 
-# 메모리 기능이 포함된 RAG 체인 생성
-chain = create_rag_chain_with_memory()
-log.info("RAG 체인이 성공적으로 생성되었습니다.")
 
-# 체인 실행(Run Chain) - 메모리 기능 테스트
-# 5개 질문으로 메모리 기능을 테스트합니다.
-
-questions = [
-    "삼성전자가 자체 개발한 AI의 이름은?",
-    "AI 브리프는 언제 발행되나요?", 
-    "문서의 주요 내용을 요약해주세요",
-    "네 번째 질문이야. 처음에 내가 뭘 물어봤는지 기억해?",
-    "첫 번째 질문과 두 번째 질문을 기억하고 있어?"
-]
-
-log.info("=== LangChain 메모리 기능 테스트 ===")
-log.info(f"메모리 설정: 최근 {memory.k}개 대화 기억\n")
-
-for i, question in enumerate(questions, 1):
-    log.info(f"🔵 질문 {i}: {question}")
+def initialize_session_state():
+    """세션 상태 초기화"""
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
     
-    # 질문 실행
-    response = chain(question)
-    log.info(f"💬 답변: {response}")
+    if "current_session_id" not in st.session_state:
+        st.session_state.current_session_id = None
     
-    # 현재 메모리 상태 출력 (디버깅용)
-    log.info(f"📝 현재 메모리에 저장된 대화 수: {len(memory.chat_memory.messages) // 2}")
-    log.info("-" * 80)
+    if "chat_history_manager" not in st.session_state:
+        st.session_state.chat_history_manager = None
+    
+    if "show_sources" not in st.session_state:
+        st.session_state.show_sources = False
+
+
+def create_new_conversation(sql_manager):
+    """새 대화 생성"""
+    try:
+        # 새 세션 생성
+        session_id = sql_manager.create_conversation()
+        
+        # 채팅 히스토리 관리자 초기화
+        chat_manager = ChatHistoryManager(
+            session_id=session_id,
+            sql_manager=sql_manager
+        )
+        
+        # 세션 상태 업데이트
+        st.session_state.current_session_id = session_id
+        st.session_state.chat_history_manager = chat_manager
+        st.session_state.messages = []
+        
+        st.success("새 대화가 시작되었습니다!")
+        st.rerun()
+        
+    except Exception as e:
+        st.error(f"새 대화 생성 오류: {str(e)}")
+
+
+def load_conversation(session_id, sql_manager):
+    """기존 대화 로드"""
+    try:
+        # 채팅 히스토리 관리자 초기화
+        chat_manager = ChatHistoryManager(
+            session_id=session_id,
+            sql_manager=sql_manager
+        )
+        
+        # 전체 대화 기록 가져오기
+        messages = chat_manager.get_full_conversation_history()
+        
+        # 세션 상태 업데이트
+        st.session_state.current_session_id = session_id
+        st.session_state.chat_history_manager = chat_manager
+        st.session_state.messages = messages
+        
+        st.success(f"대화를 불러왔습니다! ({len(messages)}개 메시지)")
+        st.rerun()
+        
+    except Exception as e:
+        st.error(f"대화 로드 오류: {str(e)}")
+
+
+def render_sidebar(sql_manager):
+    """사이드바 렌더링"""
+    with st.sidebar:
+        st.header("🗨️ 대화 관리")
+        
+        # 새 대화 버튼
+        if st.button("🆕 새 대화 시작", use_container_width=True):
+            create_new_conversation(sql_manager)
+        
+        st.divider()
+        
+        # 대화 목록
+        st.subheader("📋 대화 기록")
+        
+        try:
+            conversations = sql_manager.get_conversations(limit=20)
+            
+            if conversations:
+                for conv in conversations:
+                    session_id = conv["session_id"]
+                    title = conv["title"]
+                    updated_at = conv["updated_at"]
+                    message_count = conv["message_count"]
+                    
+                    # 현재 선택된 대화 표시
+                    is_current = (st.session_state.current_session_id == session_id)
+                    button_label = f"{'🔵' if is_current else '⚪'} {title}"
+                    
+                    if st.button(
+                        button_label, 
+                        key=f"conv_{session_id}",
+                        help=f"메시지: {message_count}개, 업데이트: {updated_at}",
+                        use_container_width=True
+                    ):
+                        if not is_current:
+                            load_conversation(session_id, sql_manager)
+            else:
+                st.info("저장된 대화가 없습니다.")
+                
+        except Exception as e:
+            st.error(f"대화 목록 로드 오류: {str(e)}")
+        
+        st.divider()
+        
+        # 설정 패널
+        st.subheader("⚙️ 설정")
+        
+        # 소스 표시 토글
+        st.session_state.show_sources = st.checkbox(
+            "검색된 문서 소스 표시", 
+            value=st.session_state.show_sources
+        )
+        
+        # 시스템 정보
+        with st.expander("ℹ️ 시스템 정보"):
+            if st.session_state.current_session_id:
+                st.write(f"**현재 세션:** {st.session_state.current_session_id[:8]}...")
+            
+            if st.session_state.chat_history_manager:
+                summary = st.session_state.chat_history_manager.get_conversation_summary()
+                st.write(f"**전체 메시지:** {summary.get('total_messages', 0)}개")
+                st.write(f"**메모리 메시지:** {summary.get('memory_messages', 0)}개")
+
+
+def render_chat_interface(llm_manager, retriever_manager):
+    """채팅 인터페이스 렌더링"""
+    st.header("🤖 RAG Chat Assistant")
+    
+    # 세션이 없으면 안내 메시지
+    if not st.session_state.current_session_id:
+        st.info("👈 사이드바에서 '새 대화 시작'을 클릭하여 대화를 시작하세요.")
+        return
+    
+    # 메시지 표시 영역
+    chat_container = st.container()
+    
+    with chat_container:
+        for message in st.session_state.messages:
+            role = message["role"]
+            content = message["content"]
+            timestamp = message.get("timestamp", "")
+            
+            if role == "user":
+                st.markdown(f"""
+                <div class="chat-message user-message">
+                    <div class="message-header">👤 사용자 {timestamp}</div>
+                    <div>{content}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="chat-message assistant-message">
+                    <div class="message-header">🤖 AI 어시스턴트 {timestamp}</div>
+                    <div>{content}</div>
+                </div>
+                """, unsafe_allow_html=True)
+    
+    # 사용자 입력
+    user_input = st.chat_input("질문을 입력하세요...")
+    
+    if user_input and st.session_state.chat_history_manager:
+        # 사용자 메시지 추가
+        st.session_state.chat_history_manager.add_user_message(user_input)
+        
+        # 검색 수행
+        with st.spinner("문서를 검색하고 답변을 생성하는 중..."):
+            try:
+                # 문서 검색
+                documents = retriever_manager.search_documents(user_input)
+                context = retriever_manager.format_documents_for_context(documents)
+                
+                # 채팅 히스토리 가져오기
+                chat_history = st.session_state.chat_history_manager.get_chat_history_as_dicts()
+                
+                # LLM 응답 생성
+                response = llm_manager.generate_response(
+                    question=user_input,
+                    context=context,
+                    chat_history=chat_history
+                )
+                
+                # AI 메시지 추가
+                st.session_state.chat_history_manager.add_ai_message(response, user_input)
+                
+                # UI 메시지 리스트 업데이트
+                st.session_state.messages = st.session_state.chat_history_manager.get_full_conversation_history()
+                
+                # 소스 정보 표시 (옵션)
+                if st.session_state.show_sources and documents:
+                    with st.expander(f"📄 검색된 문서 ({len(documents)}개)"):
+                        sources = retriever_manager.get_unique_sources(documents)
+                        for source in sources:
+                            st.write(f"• {source}")
+                
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"응답 생성 오류: {str(e)}")
+
+
+def main():
+    """메인 함수"""
+    # 세션 상태 초기화
+    initialize_session_state()
+    
+    # 시스템 초기화
+    vector_manager, llm_manager, retriever_manager, sql_manager = initialize_system()
+    
+    if not all([vector_manager, llm_manager, retriever_manager, sql_manager]):
+        st.error("시스템 초기화에 실패했습니다.")
+        return
+    
+    # UI 렌더링
+    render_sidebar(sql_manager)
+    render_chat_interface(llm_manager, retriever_manager)
+
+
+if __name__ == "__main__":
+    main()
