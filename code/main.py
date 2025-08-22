@@ -6,6 +6,8 @@ from langchain.memory import ConversationBufferWindowMemory
 from langchain_upstage import ChatUpstage
 from langchain_upstage import UpstageEmbeddings
 import utils.log_util as log
+import datetime
+import pytz
  
 # 현재 스크립트 위치를 작업 디렉토리로 설정
 from pathlib import Path
@@ -47,18 +49,22 @@ retriever = vectorstore.as_retriever()
 log.info("벡터 데이터베이스와 검색기가 성공적으로 생성되었습니다.")
 
 # 단계 6: 프롬프트 생성(Create Prompt)
+# 현재 국가 로케일 기준의 날짜와 시간
+tz = pytz.timezone("Asia/Seoul")
+nowTime = datetime.datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S')
+
 # 메모리 기능을 포함한 프롬프트를 생성합니다.
 prompt = ChatPromptTemplate.from_messages([
     ("system", """You are an assistant for question-answering tasks. 
 Use the following pieces of retrieved context to answer the question. 
 If you don't know the answer, just say that you don't know. 
-Answer in Korean.
+Answer in Korean. The current time is {nowTime}.
 
 Context: {context}"""),
     MessagesPlaceholder(variable_name="chat_history"),
     ("human", "{question}")
 ])
-log.info("프롬프트 템플릿이 생성되었습니다.")
+log.info(f"프롬프트 템플릿이 생성되었습니다. 현재시각: {nowTime}")
 
 # 단계 7: 언어모델(LLM) 생성
 log.info("언어모델을 초기화하는 중...")
@@ -96,7 +102,8 @@ def create_rag_chain_with_memory():
         formatted_prompt = prompt.format_messages(
             context=context,
             chat_history=chat_history,
-            question=question
+            question=question,
+            nowTime=nowTime
         )
         
         # LLM 호출
