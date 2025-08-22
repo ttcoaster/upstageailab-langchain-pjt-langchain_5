@@ -184,6 +184,31 @@ def load_conversation(session_id, sql_manager):
         st.error(f"대화 로드 오류: {str(e)}")
 
 
+def delete_conversation_by_id(session_id, sql_manager):
+    """대화 삭제"""
+    try:
+        # 현재 활성 대화인지 확인
+        is_current = (st.session_state.current_session_id == session_id)
+        
+        # 데이터베이스에서 대화 삭제
+        success = sql_manager.delete_conversation(session_id)
+        
+        if success:
+            # 현재 활성 대화였다면 세션 상태 초기화
+            if is_current:
+                st.session_state.current_session_id = None
+                st.session_state.chat_history_manager = None
+                st.session_state.messages = []
+            
+            st.success("대화가 삭제되었습니다!")
+            st.rerun()
+        else:
+            st.error("대화 삭제에 실패했습니다.")
+            
+    except Exception as e:
+        st.error(f"대화 삭제 오류: {str(e)}")
+
+
 def render_sidebar(sql_manager):
     """사이드바 렌더링"""
     with st.sidebar:
@@ -212,14 +237,59 @@ def render_sidebar(sql_manager):
                     is_current = (st.session_state.current_session_id == session_id)
                     button_label = f"{'🔵' if is_current else '⚪'} {title}"
                     
-                    if st.button(
-                        button_label, 
-                        key=f"conv_{session_id}",
-                        help=f"메시지: {message_count}개, 업데이트: {updated_at}",
-                        use_container_width=True
-                    ):
-                        if not is_current:
-                            load_conversation(session_id, sql_manager)
+                    # 대화 제목과 삭제 버튼을 나란히 배치
+                    col1, col2 = st.columns([4, 1])
+                    
+                    with col1:
+                        if st.button(
+                            button_label, 
+                            key=f"conv_{session_id}",
+                            help=f"메시지: {message_count}개, 업데이트: {updated_at}",
+                            use_container_width=True
+                        ):
+                            if not is_current:
+                                load_conversation(session_id, sql_manager)
+                    
+                    with col2:
+                        # 삭제 확인 상태 관리
+                        confirm_key = f"confirm_delete_{session_id}"
+                        if confirm_key not in st.session_state:
+                            st.session_state[confirm_key] = False
+                        
+                        # 삭제 버튼 또는 확인 버튼 표시
+                        if not st.session_state[confirm_key]:
+                            if st.button(
+                                "🗑️", 
+                                key=f"delete_{session_id}",
+                                help="대화 삭제",
+                                use_container_width=True
+                            ):
+                                st.session_state[confirm_key] = True
+                                st.rerun()
+                        else:
+                            # 확인/취소 버튼을 위한 하위 컬럼
+                            subcol1, subcol2 = st.columns(2)
+                            
+                            with subcol1:
+                                if st.button(
+                                    "✓", 
+                                    key=f"confirm_{session_id}",
+                                    help="삭제 확인",
+                                    use_container_width=True,
+                                    type="primary"
+                                ):
+                                    st.session_state[confirm_key] = False
+                                    delete_conversation_by_id(session_id, sql_manager)
+                            
+                            with subcol2:
+                                if st.button(
+                                    "✕", 
+                                    key=f"cancel_{session_id}",
+                                    help="삭제 취소",
+                                    use_container_width=True
+                                ):
+                                    st.session_state[confirm_key] = False
+                                    st.rerun()
             else:
                 st.info("저장된 대화가 없습니다.")
                 
