@@ -127,13 +127,14 @@ class ChatHistoryManager:
             self.logger.log_error("add_user_message", e)
             return None
     
-    def add_ai_message(self, message: str, user_input: str = None) -> int:
+    def add_ai_message(self, message: str, user_input: str = None, sources: List[str] = None) -> int:
         """
         AI 메시지 추가 및 메모리 업데이트
         
         Args:
             message (str): AI 응답 메시지
             user_input (str, optional): 대응하는 사용자 입력 (메모리 업데이트용)
+            sources (List[str], optional): 참조한 문서 소스 목록
             
         Returns:
             int: 메시지 ID (SQLite)
@@ -141,11 +142,17 @@ class ChatHistoryManager:
         self.logger.log_function_start("add_ai_message")
         
         try:
+            # 메타데이터 준비
+            metadata = {}
+            if sources:
+                metadata["sources"] = sources
+                self.logger.log_step("소스 정보 추가", f"{len(sources)}개 소스")
+            
             # SQLite에 저장 (auto_save가 True인 경우)
             message_id = None
             if self.auto_save:
                 message_id = self.sql_manager.add_message(
-                    self.session_id, "assistant", message
+                    self.session_id, "assistant", message, metadata if metadata else None
                 )
             
             # 메모리 업데이트 (user_input이 제공된 경우)

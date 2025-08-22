@@ -265,6 +265,7 @@ def render_chat_interface(llm_manager, retriever_manager):
             role = message["role"]
             content = message["content"]
             timestamp = message.get("timestamp", "")
+            metadata = message.get("metadata", {})
             
             if role == "user":
                 st.markdown(f"""
@@ -280,6 +281,13 @@ def render_chat_interface(llm_manager, retriever_manager):
                     <div>{content}</div>
                 </div>
                 """, unsafe_allow_html=True)
+                
+                # 소스 정보 표시 (설정이 켜져 있고 소스가 있는 경우)
+                if st.session_state.show_sources and metadata and metadata.get("sources"):
+                    sources = metadata["sources"]
+                    with st.expander(f"📄 참조 문서 ({len(sources)}개)", expanded=False):
+                        for source in sources:
+                            st.write(f"• {source}")
     
     # 사용자 입력
     user_input = st.chat_input("질문을 입력하세요...")
@@ -305,18 +313,14 @@ def render_chat_interface(llm_manager, retriever_manager):
                     chat_history=chat_history
                 )
                 
-                # AI 메시지 추가
-                st.session_state.chat_history_manager.add_ai_message(response, user_input)
+                # 소스 정보 추출
+                sources = retriever_manager.get_unique_sources(documents) if documents else []
+                
+                # AI 메시지 추가 (소스 정보 포함)
+                st.session_state.chat_history_manager.add_ai_message(response, user_input, sources)
                 
                 # UI 메시지 리스트 업데이트
                 st.session_state.messages = st.session_state.chat_history_manager.get_full_conversation_history()
-                
-                # 소스 정보 표시 (옵션)
-                if st.session_state.show_sources and documents:
-                    with st.expander(f"📄 검색된 문서 ({len(documents)}개)"):
-                        sources = retriever_manager.get_unique_sources(documents)
-                        for source in sources:
-                            st.write(f"• {source}")
                 
                 st.rerun()
                 
