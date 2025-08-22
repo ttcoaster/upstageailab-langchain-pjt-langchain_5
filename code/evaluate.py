@@ -328,39 +328,39 @@ class RAGEvaluator:
                                category_scores: Dict[str, Any], 
                                results: List[Dict[str, Any]]):
         """평가 결과 요약 출력"""
-        print("\n" + "="*60)
-        print("🎯 RAG 시스템 품질 평가 결과")
-        print("="*60)
+        self.logger.info("\n" + "="*60)
+        self.logger.info("🎯 RAG 시스템 품질 평가 결과")
+        self.logger.info("="*60)
         
         # 전체 점수
-        print("\n📊 전체 RAGAS 점수:")
-        print(f"  • Faithfulness (사실 정확성):     {overall_scores.get('faithfulness', 0):.3f}")
-        print(f"  • Answer Relevancy (답변 관련성):  {overall_scores.get('answer_relevancy', 0):.3f}")
-        print(f"  • Context Recall (컨텍스트 회상률): {overall_scores.get('context_recall', 0):.3f}")
-        print(f"  • Answer Correctness (답변 정확성): {overall_scores.get('answer_correctness', 0):.3f}")
-        print(f"  • 📈 RAGAS 종합 점수:            {overall_scores.get('ragas_score', 0):.3f}")
+        self.logger.info("\n📊 전체 RAGAS 점수:")
+        self.logger.info(f"  • Faithfulness (사실 정확성):     {overall_scores.get('faithfulness', 0):.3f}")
+        self.logger.info(f"  • Answer Relevancy (답변 관련성):  {overall_scores.get('answer_relevancy', 0):.3f}")
+        self.logger.info(f"  • Context Recall (컨텍스트 회상률): {overall_scores.get('context_recall', 0):.3f}")
+        self.logger.info(f"  • Answer Correctness (답변 정확성): {overall_scores.get('answer_correctness', 0):.3f}")
+        self.logger.info(f"  • 📈 RAGAS 종합 점수:            {overall_scores.get('ragas_score', 0):.3f}")
         
         # 카테고리별 점수
-        print("\n📂 카테고리별 분석:")
+        self.logger.info("\n📂 카테고리별 분석:")
         for category, scores in category_scores.items():
-            print(f"  • {category.upper()}: {scores['question_count']}개 질문")
-            print(f"    - 성공률: {scores['success_rate']:.1%}")
-            print(f"    - 평균 처리시간: {scores['avg_processing_time_ms']:.0f}ms")
+            self.logger.info(f"  • {category.upper()}: {scores['question_count']}개 질문")
+            self.logger.info(f"    - 성공률: {scores['success_rate']:.1%}")
+            self.logger.info(f"    - 평균 처리시간: {scores['avg_processing_time_ms']:.0f}ms")
         
         # 메모리 테스트 결과
         memory_questions = [r for r in results if r["category"] == "memory"]
         if memory_questions:
             memory_success = len([r for r in memory_questions if not r.get("error")])
-            print(f"\n🧠 메모리 기능 테스트: {memory_success}/{len(memory_questions)} 성공")
+            self.logger.info(f"\n🧠 메모리 기능 테스트: {memory_success}/{len(memory_questions)} 성공")
         
         # 처리 통계
         total_time = sum(r.get("processing_time_ms", 0) for r in results)
         avg_time = total_time / len(results) if results else 0
-        print(f"\n⏱️  처리 시간 통계:")
-        print(f"  • 총 처리시간: {total_time:.0f}ms")
-        print(f"  • 평균 처리시간: {avg_time:.0f}ms")
+        self.logger.info(f"\n⏱️  처리 시간 통계:")
+        self.logger.info(f"  • 총 처리시간: {total_time:.0f}ms")
+        self.logger.info(f"  • 평균 처리시간: {avg_time:.0f}ms")
         
-        print("\n" + "="*60)
+        self.logger.info("\n" + "="*60)
     
     def run_evaluation(self):
         """전체 평가 프로세스 실행"""
@@ -390,22 +390,25 @@ class RAGEvaluator:
             # 7. 결과 출력
             self.print_evaluation_summary(overall_scores, category_scores, results)
             
-            print(f"\n💾 상세 결과가 저장되었습니다: {result_file}")
-            print(f"📋 최신 결과 확인: {self.results_dir}/latest.json")
+            self.logger.info(f"\n💾 상세 결과가 저장되었습니다: {result_file}")
+            self.logger.info(f"📋 최신 결과 확인: {self.results_dir}/latest.json")
             
             self.logger.log_success("=== RAG 품질 평가 완료 ===")
             return True
             
         except Exception as e:
             self.logger.log_error("run_evaluation", e)
-            print(f"\n❌ 평가 중 오류 발생: {str(e)}")
+            self.logger.error(f"\n❌ 평가 중 오류 발생: {str(e)}")
             return False
 
 
 def main():
     """메인 함수"""
-    print("🚀 RAG 시스템 품질 평가 CLI")
-    print("WebUI와 동일한 RAG 방식으로 평가를 수행합니다.\n")
+    # 로거 초기화
+    log = LoggerManager("Evaluate")
+    
+    log.info("🚀 RAG 시스템 품질 평가 CLI")
+    log.info("WebUI와 동일한 RAG 방식으로 평가를 수행합니다.\n")
     
     try:
         # RAGAS 설정
@@ -416,14 +419,14 @@ def main():
         success = evaluator.run_evaluation()
         
         if success:
-            print("\n✅ 평가가 성공적으로 완료되었습니다!")
+            log.info("\n✅ 평가가 성공적으로 완료되었습니다!")
             return 0
         else:
-            print("\n❌ 평가 중 오류가 발생했습니다.")
+            log.error("\n❌ 평가 중 오류가 발생했습니다.")
             return 1
             
     except Exception as e:
-        print(f"\n❌ 평가 중 오류 발생: {str(e)}")
+        log.error(f"\n❌ 평가 중 오류 발생: {str(e)}")
         return 1
 
 

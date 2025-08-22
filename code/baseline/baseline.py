@@ -15,7 +15,7 @@ from pathlib import Path
 script_dir = Path(__file__).parent.absolute()
 os.chdir(script_dir)
 
-import sys; sys.path.append('../'); import modules.logger as log
+import log_util as log
 
 # 환경변수 로드
 load_dotenv()
