@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-로그 유틸리티. import한 "스크립트명.log" 파일에 로그 출력.
+로그 유틸리티. 실행중인 "스크립트명.log" 파일에 로그 출력.
 사용법:
-import modules.logger as log
-# log.change_file_mode("a") # 기본 모드는 "w"(덮어쓰기) 이지만 "a"(추가)로 변경가능.
+from modules.logger import LoggerManager
+
+log = LoggerManager("ModuleName")
 log.info("로그 메시지 출력")
+log.log_function_start("function_name", param1="value")
+
+모든 LoggerManager 인스턴스는 동일한 전역 로거를 공유합니다.
 """
 
 import os
@@ -86,110 +90,58 @@ def setup_logger(script_file_path=None, file_mode="w"):
     return logger
 
 
-# 모듈 로드 시 자동으로 로거 초기화 (스크립트 파일 경로 자동 감지, 기본 모드 "w")
-_logger = setup_logger()
-_current_script_path = None
-_current_file_mode = "w"
+# 전역 로거 초기화 (한 번만 실행)
+_logger = None
+_logger_initialized = False
 
-# 모듈 레벨에서 로그 메서드들을 직접 노출
-def info(*args):
-    message = ' '.join(str(arg) for arg in args)
-    _logger.info(message)
-
-def debug(*args):
-    message = ' '.join(str(arg) for arg in args)
-    _logger.debug(message)
-
-def warning(*args):
-    message = ' '.join(str(arg) for arg in args)
-    _logger.warning(message)
-
-def error(*args):
-    message = ' '.join(str(arg) for arg in args)
-    _logger.error(message)
-
-def critical(*args):
-    message = ' '.join(str(arg) for arg in args)
-    _logger.critical(message)
-
-# 로거 객체도 직접 노출 (필요시 사용)
-logger = _logger
-
-
-def change_file_mode(file_mode):
-    """
-    파일 핸들러의 모드를 변경합니다.
+def get_global_logger():
+    """전역 로거를 반환합니다. 초기화되지 않았다면 초기화합니다."""
+    global _logger, _logger_initialized
     
-    Args:
-        file_mode (str): 새로운 파일 모드 ("w", "a" 등)
-    """
-    global _logger, logger, _current_script_path, _current_file_mode
+    if not _logger_initialized:
+        _logger = setup_logger()
+        _logger_initialized = True
     
-    _current_file_mode = file_mode
-    
-    # 현재 스크립트 경로가 설정되어 있으면 그것을 사용, 없으면 기본값 사용
-    script_path = _current_script_path if _current_script_path else None
-    
-    _logger = setup_logger(script_path, file_mode)
-    logger = _logger 
+    return _logger 
 
 
 class LoggerManager:
     """로깅 관리 클래스"""
     
-    def __init__(self, module_name: str = None, file_mode: str = "w"):
+    def __init__(self, module_name: str = None):
         """
         LoggerManager 초기화
         
         Args:
-            module_name (str, optional): 모듈 이름 (로그 파일명에 사용)
-            file_mode (str): 파일 모드 ("w": 덮어쓰기, "a": 추가)
+            module_name (str, optional): 모듈 이름 (로그에 표시될 카테고리명)
         """
         self.module_name = module_name or "module"
-        self.file_mode = file_mode
-        
-        # 기존 logger 설정 변경 (필요시)
-        change_file_mode(file_mode)
+        self.logger = get_global_logger()
     
     def info(self, *args):
         """정보 레벨 로그"""
-        if self.module_name:
-            message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
-            info(message)
-        else:
-            info(*args)
+        message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
+        self.logger.info(message)
     
     def debug(self, *args):
         """디버그 레벨 로그"""
-        if self.module_name:
-            message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
-            debug(message)
-        else:
-            debug(*args)
+        message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
+        self.logger.debug(message)
     
     def warning(self, *args):
         """경고 레벨 로그"""
-        if self.module_name:
-            message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
-            warning(message)
-        else:
-            warning(*args)
+        message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
+        self.logger.warning(message)
     
     def error(self, *args):
         """오류 레벨 로그"""
-        if self.module_name:
-            message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
-            error(message)
-        else:
-            error(*args)
+        message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
+        self.logger.error(message)
     
     def critical(self, *args):
         """심각한 오류 레벨 로그"""
-        if self.module_name:
-            message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
-            critical(message)
-        else:
-            critical(*args)
+        message = f"[{self.module_name}] " + ' '.join(str(arg) for arg in args)
+        self.logger.critical(message)
     
     def log_function_start(self, function_name: str, **kwargs):
         """함수 시작 로그"""
@@ -229,4 +181,4 @@ class LoggerManager:
     @staticmethod
     def get_global_logger():
         """전역 로거 반환 (기존 호환성)"""
-        return _logger
+        return get_global_logger()
