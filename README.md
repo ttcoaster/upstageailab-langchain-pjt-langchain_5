@@ -193,3 +193,7 @@ flowchart TD
 
 ## 📰​ 참고자료
 - _참고자료를 첨부해주세요_
+
+---
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/AIBootcamp13/upstageailab-langchain-pjt-langchain_5)
