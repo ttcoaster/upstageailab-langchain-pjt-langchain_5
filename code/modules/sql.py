@@ -17,6 +17,7 @@ SQLite 데이터베이스 관리 모듈
 import sqlite3
 import json
 import uuid
+import pytz
 from datetime import datetime
 from typing import List, Dict, Optional, Tuple
 from pathlib import Path
@@ -96,7 +97,9 @@ class SQLManager:
         session_id = str(uuid.uuid4())
         
         if title is None:
-            title = f"새 대화 {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            seoul_tz = pytz.timezone('Asia/Seoul')
+            now_seoul = datetime.now(seoul_tz)
+            title = f"새 대화 {now_seoul.strftime('%Y-%m-%d %H:%M')}"
         
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
