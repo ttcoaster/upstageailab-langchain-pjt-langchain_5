@@ -9,13 +9,13 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_upstage import ChatUpstage
 from langchain_upstage import UpstageEmbeddings
-import utils.log_util as log
  
 # 현재 스크립트 위치를 작업 디렉토리로 설정
-import sys
 from pathlib import Path
 script_dir = Path(__file__).parent.absolute()
 os.chdir(script_dir)
+
+import log_util as log
 
 # 환경변수 로드
 load_dotenv()
@@ -24,8 +24,8 @@ log.info("환경변수가 성공적으로 로드되었습니다.")
 
 # 단계 1: 문서 로드(Load Documents)
 log.info("PDF 문서를 로드하는 중...")
-loader = PyMuPDFLoader("../data/SPRI_AI_Brief_2023년12월호_F.pdf")
-# loader = PyMuPDFLoader("../data/4.단팥빵(비상스트레이트법).pdf")
+loader = PyMuPDFLoader("../../data/pdf/SPRI_AI_Brief_2023년12월호_F.pdf")
+# loader = PyMuPDFLoader("../../data/pdf/4.단팥빵(비상스트레이트법).pdf")
 docs = loader.load()
 log.info(f"로드된 문서 수: {len(docs)}")
 log.info(f"첫 번째 문서 미리보기: {docs[0].page_content[:200]}...")

@@ -23,15 +23,20 @@
 <br>
 
 ## 🔨 개발 환경 및 기술 스택
-- 주 언어 : Python 3.10+
-- 패키지 관리 : UV (Ultra-fast Python package manager)
-- 주요 라이브러리 :
-  - LangChain (Community, Core, OpenAI, Upstage, Text Splitters)
-  - FAISS (벡터 검색)
-  - PyMuPDF (PDF 처리)
-  - python-dotenv (환경변수 관리)
-- 버전 및 이슈관리 : GitHub
-- 협업 툴 : GitHub, Slack
+- **주 언어**: Python 3.10+
+- **패키지 관리**: UV (Ultra-fast Python package manager)
+- **프론트엔드**: Streamlit (WebUI)
+- **주요 라이브러리**:
+  - **LangChain**: Community, Core, OpenAI, Upstage, Text Splitters
+  - **FAISS**: 벡터 검색 및 저장
+  - **PyMuPDF**: PDF 문서 처리  
+  - **RAGAS**: RAG 시스템 품질 평가
+  - **pytest**: 단위/통합 테스트
+  - **SQLite**: 대화 데이터 저장
+  - **python-dotenv**: 환경변수 관리
+- **API**: Upstage AI (Chat, Embeddings)
+- **버전 및 이슈관리**: GitHub
+- **협업 툴**: GitHub, Slack
 
 <br>
 
@@ -50,10 +55,19 @@ pip install uv
 
 ### 주요 명령어
 ```bash
-# .py 파일 실행
-uv run code/baseline.py
+# 기본 RAG 시스템 실행
+uv run python code/baseline/baseline.py
 
-# .py 실행없이 의존성 패키지만 설치
+# Streamlit WebUI 실행
+uv run streamlit run code/main.py
+
+# RAG 품질 평가 실행
+uv run python code/evaluate.py
+
+# 테스트 실행
+uv run pytest code/tests/
+
+# 의존성 패키지 설치
 uv sync
 
 # 새 패키지 추가
@@ -65,36 +79,65 @@ uv add 패키지명
 ## 📁 프로젝트 구조
 ```
 ├── code/
-│   ├── baseline.py           # RAG 시스템 기본 구현
-│   ├── baseline.ipynb        # RAG 시스템 노트북 버전
-│   └── env_template          # 환경 변수 템플릿
+│   ├── baseline/             # 기본 RAG 구현
+│   │   ├── baseline.py       # 단일 파일 RAG 시스템
+│   │   ├── baseline_directoryloader.py  # 다중 파일 처리
+│   │   └── baseline_memory.py    # 메모리 기능 포함 버전
+│   ├── modules/              # 모듈화된 RAG 컴포넌트
+│   │   ├── __init__.py
+│   │   ├── sql.py            # SQLite 대화 저장 관리
+│   │   ├── logger.py         # 로깅 시스템
+│   │   ├── vector_store.py   # 벡터스토어 관리 (통합됨)
+│   │   ├── llm.py           # LLM 관리
+│   │   ├── retriever.py     # 문서 검색 관리
+│   │   ├── chat_history.py  # 채팅 히스토리 관리
+│   │   └── crawler.py       # 문서 로딩 관리
+│   ├── tests/               # pytest 테스트 코드
+│   ├── utils/               # 유틸리티 함수
+│   ├── main.py              # Streamlit WebUI
+│   └── evaluate.py          # RAGAS 품질 평가 도구
 ├── data/
-│   ├── 4.단팥빵(비상스트레이트법).pdf
-│   └── SPRI_AI_Brief_2023년12월호_F.pdf
-├── pyproject.toml            # 프로젝트 의존성 관리 (UV)
-├── uv.lock                   # 의존성 버전 락 파일 (UV)
-├── CLAUDE.md                 # 프로젝트 지침
+│   ├── pdf/                 # PDF 문서들
+│   ├── vectorstore/         # FAISS 벡터스토어
+│   ├── eval/                # 평가 관련 데이터
+│   │   ├── question_dataset.json      # 평가용 질문-답변 데이터셋
+│   │   └── evaluation_results/        # 평가 결과 저장
 └── README.md
 ```
 
 <br>
 
 ## 💻​ 구현 기능
-### 1. 문서 로드 및 전처리
-- PDF 문서 로드 (PyMuPDF 활용)
-- 텍스트 분할 (RecursiveCharacterTextSplitter)
-- 청크 크기 1000, 오버랩 50으로 최적화
 
-### 2. 임베딩 및 벡터 저장소
-- Upstage Embeddings API를 활용한 임베딩 생성
-- FAISS 벡터 저장소 구축 및 검색
-- 의미적 유사성 기반 문서 검색
+### 1. 기본 RAG 시스템 (baseline/)
+- **baseline.py**: 단일 파일 RAG 시스템 구현
+- **baseline_directoryloader.py**: 다중 PDF 파일 처리
+- **baseline_memory.py**: 대화 메모리 기능 포함
 
-### 3. RAG 기반 질의응답
-- 검색된 문서 컨텍스트를 활용한 답변 생성
-- Upstage ChatGPT API 통합
-- 한국어 질의응답 지원
-- 모르는 내용에 대한 적절한 응답 처리
+### 2. 모듈화된 RAG 시스템 (modules/)
+- **VectorStoreManager**: FAISS 벡터스토어 관리, 증분 업데이트, 파일 변경 감지
+- **LLMManager**: Upstage Chat API 통합, 프롬프트 관리
+- **RetrieverManager**: 문서 검색, 유사도 기반 검색
+- **ChatHistoryManager**: 대화 기록 관리, 메모리 기능
+- **SQLManager**: SQLite 기반 대화 저장
+- **LoggerManager**: 통합 로깅 시스템
+
+### 3. Streamlit WebUI (main.py)
+- 실시간 채팅 인터페이스
+- 대화 히스토리 관리
+- 문서 소스 표시
+- 설정 패널
+
+### 4. 품질 평가 시스템 (evaluate.py)
+- **RAGAS 메트릭**: faithfulness, answer_relevancy, context_recall, answer_correctness
+- **데이터셋 기반 평가**: 사전 정의된 질문-답변 쌍 사용
+- **결과 저장**: JSON 형태로 평가 결과 저장
+- **Upstage API 호환**: baseline.py 방식으로 RAGAS 연동
+
+### 5. 테스트 시스템 (tests/)
+- **pytest 기반**: 모든 주요 컴포넌트 테스트
+- **단위 테스트**: 각 모듈별 기능 검증
+- **통합 테스트**: 전체 파이프라인 검증
 
 <br>
 
@@ -150,3 +193,7 @@ flowchart TD
 
 ## 📰​ 참고자료
 - _참고자료를 첨부해주세요_
+
+---
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/AIBootcamp13/upstageailab-langchain-pjt-langchain_5)
