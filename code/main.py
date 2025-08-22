@@ -15,6 +15,8 @@ import sys
 import streamlit as st
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import datetime, timezone, timedelta
+import pytz
 from langchain_upstage import UpstageEmbeddings
 
 # 현재 스크립트의 디렉토리를 sys.path에 추가
@@ -70,6 +72,26 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+
+def format_timestamp_to_kst(timestamp_str):
+    """UTC 타임스탬프를 Asia/Seoul 타임존으로 변환하여 포맷팅"""
+    if not timestamp_str:
+        return ""
+    
+    try:
+        # SQLite timestamp 형식 파싱 (YYYY-MM-DD HH:MM:SS 형태)
+        dt = datetime.fromisoformat(timestamp_str.replace(' ', 'T'))
+        
+        # UTC로 간주하고 Asia/Seoul로 변환
+        utc_dt = dt.replace(tzinfo=pytz.UTC)
+        seoul_tz = pytz.timezone('Asia/Seoul')
+        seoul_dt = utc_dt.astimezone(seoul_tz)
+        
+        # 포맷팅 (월/일 시:분)
+        return seoul_dt.strftime("%m/%d %H:%M")
+    except:
+        return timestamp_str
 
 
 @st.cache_resource
@@ -211,7 +233,7 @@ def render_sidebar(sql_manager):
                         if st.button(
                             button_label, 
                             key=f"conv_{session_id}",
-                            help=f"메시지: {message_count}개, 업데이트: {updated_at}",
+                            help=f"메시지: {message_count}개, 업데이트: {format_timestamp_to_kst(updated_at)}",
                             use_container_width=True
                         ):
                             if not is_current:
@@ -302,19 +324,20 @@ def render_chat_interface(llm_manager, retriever_manager):
             role = message["role"]
             content = message["content"]
             timestamp = message.get("timestamp", "")
+            formatted_timestamp = format_timestamp_to_kst(timestamp)
             metadata = message.get("metadata", {})
             
             if role == "user":
                 st.markdown(f"""
                 <div class="chat-message user-message">
-                    <div class="message-header">👤 사용자 {timestamp}</div>
+                    <div class="message-header">👤 사용자 {formatted_timestamp}</div>
                     <div>{content}</div>
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown(f"""
                 <div class="chat-message assistant-message">
-                    <div class="message-header">🤖 AI 어시스턴트 {timestamp}</div>
+                    <div class="message-header">🤖 AI 어시스턴트 {formatted_timestamp}</div>
                     <div>{content}</div>
                 </div>
                 """, unsafe_allow_html=True)
