@@ -51,14 +51,17 @@ st.markdown("""
         margin-bottom: 1rem;
         display: flex;
         flex-direction: column;
+        color: #222;
     }
     .user-message {
         background-color: #f0f2f6;
         margin-left: 20%;
+        color: #222;
     }
     .assistant-message {
         background-color: #e8f4fd;
         margin-right: 20%;
+        color: #222;
     }
     .message-header {
         font-weight: bold;
@@ -69,6 +72,28 @@ st.markdown("""
     }
     .stApp {
         margin-top: -80px;
+    }
+
+    /* 다크모드 감지 및 적용 */
+    @media (prefers-color-scheme: dark) {
+        .chat-message {
+            background-color: #222 !important;
+            color: #f0f2f6 !important;
+        }
+        .user-message {
+            background-color: #333 !important;
+            color: #f0f2f6 !important;
+        }
+        .assistant-message {
+            background-color: #2a3b4d !important;
+            color: #f0f2f6 !important;
+        }
+        .message-header {
+            color: #90caf9 !important;
+        }
+        .stApp > header {
+            background-color: transparent;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
