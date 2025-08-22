@@ -8,9 +8,6 @@
 2. 검색 결과 필터링 및 랭킹
 3. 검색 매개변수 조정
 4. 검색 결과 후처리
-
-Author: AI Assistant
-Date: 2025-08-22
 """
 
 from typing import List, Dict, Optional, Tuple, Any

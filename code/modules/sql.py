@@ -12,9 +12,6 @@ SQLite 데이터베이스 관리 모듈
 테이블 구조:
 - conversations: id, session_id, created_at, updated_at, title
 - messages: id, conversation_id, role, content, timestamp, metadata
-
-Author: AI Assistant
-Date: 2025-08-22
 """
 
 import sqlite3

@@ -8,9 +8,6 @@
 2. 채팅 히스토리 저장 및 로드
 3. 컨텍스트 윈도우 크기 조절
 4. SQLite와 연동한 영구 저장
-
-Author: AI Assistant
-Date: 2025-08-22
 """
 
 from typing import List, Dict, Optional, Tuple

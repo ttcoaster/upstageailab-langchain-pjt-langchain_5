@@ -16,9 +16,6 @@
     embeddings = UpstageEmbeddings(api_key="your_key", model="embedding-query")
     manager = VectorStoreManager(embeddings=embeddings)
     vectorstore = manager.get_or_create_vectorstore()
-
-Author: AI Assistant
-Date: 2025-08-22
 """
 
 import os

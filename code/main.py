@@ -8,9 +8,6 @@ LangChain 기반 RAG 시스템을 위한 Streamlit 웹 인터페이스입니다.
 - 대화 히스토리 관리
 - 설정 패널
 - 문서 검색 및 응답 생성
-
-Author: AI Assistant
-Date: 2025-08-22
 """
 
 import os
@@ -27,8 +24,8 @@ if str(script_dir) not in sys.path:
 
 # 모듈 import
 from modules import (
-    SQLManager, LoggerManager, VectorStoreManager, 
-    LLMManager, RetrieverManager, ChatHistoryManager, CrawlerManager
+    SQLManager, VectorStoreManager, 
+    LLMManager, RetrieverManager, ChatHistoryManager
 )
 
 # 환경변수 로드 (스크립트 디렉토리 기준)

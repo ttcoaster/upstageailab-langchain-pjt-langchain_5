@@ -8,9 +8,6 @@
 2. 디렉토리 스캔 및 파일 수집
 3. 문서 메타데이터 추출
 4. 텍스트 분할 및 전처리
-
-Author: AI Assistant
-Date: 2025-08-22
 """
 
 import os

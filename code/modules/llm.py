@@ -8,9 +8,6 @@ LLM API 호출 및 응답 처리 모듈
 2. 프롬프트 템플릿 관리
 3. API 호출 및 응답 처리
 4. 스트리밍 응답 지원
-
-Author: AI Assistant
-Date: 2025-08-22
 """
 
 import os

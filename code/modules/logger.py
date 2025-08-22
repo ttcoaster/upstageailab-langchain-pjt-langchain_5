@@ -8,9 +8,6 @@
 1. 기존 log_util.py 기능 래핑
 2. 클래스 기반 로깅 인터페이스 제공
 3. 모듈별 로그 파일 관리
-
-Author: AI Assistant
-Date: 2025-08-22
 """
 
 import os

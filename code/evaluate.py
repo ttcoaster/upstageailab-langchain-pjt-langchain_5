@@ -9,13 +9,11 @@ RAGAS 프레임워크로 답변 품질을 평가하는 도구입니다.
 - 사전 정의된 질문-정답 데이터셋 사용 (data/eval/question_dataset.json)
 - RAGAS 메트릭을 통한 품질 평가 (faithfulness, answer_relevancy, context_recall, answer_correctness)
 - 평가 결과 저장 및 리포트 생성 (data/eval/evaluation_results/)
-- baseline.py 방식의 Upstage API 직접 사용으로 RAGAS 호환성 확보
+- Upstage API 직접 사용으로 RAGAS 호환성 확보
 
 사용법:
     uv run python code/evaluate.py
 
-Author: AI Assistant
-Date: 2025-08-22
 """
 
 import os
