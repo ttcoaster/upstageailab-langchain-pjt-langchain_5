@@ -200,17 +200,20 @@ class RetrieverManager:
             documents (List[Document]): 문서 리스트
             
         Returns:
-            List[str]: 고유한 소스 파일 목록
+            List[str]: 고유한 소스 파일 목록 (파일명만)
         """
+        import os
+        
         sources = set()
         for doc in documents:
-            source = doc.metadata.get('source', '')
+            # source_file 우선 사용, 없으면 source에서 파일명 추출
             source_file = doc.metadata.get('source_file', '')
-            
-            if source:
-                sources.add(source)
             if source_file:
                 sources.add(source_file)
+            else:
+                source = doc.metadata.get('source', '')
+                if source:
+                    sources.add(os.path.basename(source))
         
         return sorted(list(sources))
     
