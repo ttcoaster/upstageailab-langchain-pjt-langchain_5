@@ -17,7 +17,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from langchain_upstage import UpstageEmbeddings
 
-# 현재 스크립트의 디렉토리를 sys.path에 추가 (chdir 대신)
+# 현재 스크립트의 디렉토리를 sys.path에 추가
 script_dir = Path(__file__).parent.absolute()
 if str(script_dir) not in sys.path:
     sys.path.insert(0, str(script_dir))
@@ -76,14 +76,14 @@ st.markdown("""
 def initialize_system():
     """시스템 초기화 (캐시됨) - 공통 모듈 사용"""
     result = RAGSystemInitializer.initialize_system(
-        current_file_path=Path(__file__).parent,
+        current_file_path=script_dir,
         include_sql=True,
         logger_name="StreamlitRAG"
     )
     
     if result is None:
         st.error("시스템 초기화에 실패했습니다.")
-        return None, None, None, None
+        return None, None, None, None, None
     
     return result
 
