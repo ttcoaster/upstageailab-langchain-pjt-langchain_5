@@ -211,7 +211,7 @@ st.markdown("""
             color: #f0e6d6 !important;
         }
         .assistant-message {
-            background: linear-gradient(135deg, #2a3b4d 0%, #1e293b 100%) !important;
+            background: linear-gradient(135deg, #4d392a 0%, #3b301e 100%) !important;
             border-left: 4px solid #e6b800 !important;
             color: #f0e6d6 !important;
         }
