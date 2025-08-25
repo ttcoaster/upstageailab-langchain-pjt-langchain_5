@@ -36,63 +36,230 @@ load_dotenv(script_dir / '.env')
 
 # 페이지 설정
 st.set_page_config(
-    page_title="RAG Chat Assistant",
-    page_icon="🤖",
+    page_title="제과제빵 AI 어시스턴트",
+    page_icon="🍞",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# CSS 스타일링
+# CSS 스타일링 (빵 테마)
 st.markdown("""
 <style>
     .chat-message {
         padding: 1rem;
-        border-radius: 0.5rem;
+        border-radius: 0.8rem;
         margin-bottom: 1rem;
         display: flex;
         flex-direction: column;
-        color: #222;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background: linear-gradient(135deg, #f7f3e9 0%, #f0e6d6 100%);
+        color: #8b4513;
     }
     .user-message {
-        background-color: #f0f2f6;
+        background: linear-gradient(135deg, #f7f3e9 0%, #f0e6d6 100%);
         margin-left: 20%;
-        color: #222;
+        border-left: 4px solid #d4aa7d;
+        color: #8b4513;
     }
     .assistant-message {
-        background-color: #e8f4fd;
+        background: linear-gradient(135deg, #f4e4bc 0%, #e8d5a3 100%);
         margin-right: 20%;
-        color: #222;
+        border-left: 4px solid #b8860b;
+        color: #8b4513;
     }
     .message-header {
         font-weight: bold;
         margin-bottom: 0.5rem;
+        color: #8b4513;
     }
     .stApp > header {
         background-color: transparent;
     }
     .stApp {
         margin-top: -80px;
+        background: linear-gradient(180deg, #faf8f3 0%, #f5f0e8 100%);
+    }
+    .stSidebar {
+        background: linear-gradient(180deg, #f9f6f0 0%, #f2e9d8 100%);
+    }
+    .stSidebar > div {
+        background: linear-gradient(180deg, #f9f6f0 0%, #f2e9d8 100%);
+    }
+    .stSidebar > div > div {
+        background: linear-gradient(180deg, #f9f6f0 0%, #f2e9d8 100%);
+    }
+    .stButton > button {
+        background: linear-gradient(135deg, #e6b800 0%, #d4aa7d 100%);
+        color: #ffffff;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: bold;
+    }
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #d4aa7d 0%, #b8860b 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .stChatFloatingInputContainer {
+        background-color: transparent !important;
+        background: transparent !important;
+    }
+    .stChatFloatingInputContainer > * {
+        background-color: transparent !important;
+        background: transparent !important;
+    }
+    div[data-testid="stChatInput"] {
+        border-radius: 1.5rem !important;
+        overflow: visible !important;
+        background: linear-gradient(135deg, #f7f3e9 0%, #f0e6d6 100%) !important;
+        border: 1px solid #d4aa7d !important;
+        min-height: 3rem !important;
+        height: 3rem !important;
+        max-height: 3rem !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    div[data-testid="stChatInput"] > div,
+    div[data-testid="stChatInput"] > div > div,
+    div[data-testid="stChatInput"] > div > div > div,
+    div[data-testid="stChatInput"] > div > div > div > div {
+        background: transparent !important;
+        border: none !important;
+        border-radius: inherit !important;
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    div[data-testid="stChatInput"] form {
+        background: transparent !important;
+        border: none !important;
+        display: flex !important;
+        align-items: center !important;
+        height: 100% !important;
+        width: 100% !important;
+        padding: 0.25rem !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+    }
+    div[data-testid="stChatInput"] textarea {
+        background: transparent !important;
+        border: none !important;
+        color: #8b4513 !important;
+        padding: 0 1rem !important;
+        flex: 1 !important;
+        resize: none !important;
+        height: 100% !important;
+        line-height: 2.5rem !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        vertical-align: middle !important;
+        display: flex !important;
+        align-items: center !important;
+        font-size: 1rem !important;
+    }
+    div[data-testid="stChatInput"] button {
+        background: linear-gradient(135deg, #e6b800 0%, #d4aa7d 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 50% !important;
+        width: 2.2rem !important;
+        height: 2.2rem !important;
+        margin: auto 0.4rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+        align-self: center !important;
+        min-width: 2.2rem !important;
+        min-height: 2.2rem !important;
+        max-width: 2.2rem !important;
+        max-height: 2.2rem !important;
+    }
+    div[data-testid="stChatInput"] button:hover {
+        background: linear-gradient(135deg, #d4aa7d 0%, #b8860b 100%) !important;
+    }
+    div[data-testid="stChatInput"] button svg {
+        fill: white !important;
+    }
+    .main > div {
+        background-color: transparent !important;
+    }
+    [data-testid="stAppViewBlockContainer"] {
+        background-color: transparent !important;
+    }
+    section[data-testid="stChatFlowMessage"] {
+        background-color: transparent !important;
+    }
+    .stBottom {
+        background-color: transparent !important;
+        background: transparent !important;
+    }
+    .stBottom > div {
+        background-color: transparent !important;
+        background: transparent !important;
     }
 
     /* 다크모드 감지 및 적용 */
     @media (prefers-color-scheme: dark) {
         .chat-message {
-            background-color: #222 !important;
-            color: #f0f2f6 !important;
+            background: linear-gradient(135deg, #232323 0%, #2c2c2c 100%) !important;
+            color: #f0e6d6 !important;
         }
         .user-message {
-            background-color: #333 !important;
-            color: #f0f2f6 !important;
+            background: linear-gradient(135deg, #232323 0%, #2c2c2c 100%) !important;
+            border-left: 4px solid #b8860b !important;
+            color: #f0e6d6 !important;
         }
         .assistant-message {
-            background-color: #2a3b4d !important;
-            color: #f0f2f6 !important;
+            background: linear-gradient(135deg, #4d392a 0%, #3b301e 100%) !important;
+            border-left: 4px solid #e6b800 !important;
+            color: #f0e6d6 !important;
         }
         .message-header {
-            color: #90caf9 !important;
+            color: #ffe082 !important;
         }
         .stApp > header {
             background-color: transparent;
+        }
+        .stApp {
+            background: linear-gradient(180deg, #232323 0%, #2c2c2c 100%) !important;
+        }
+        .stSidebar,
+        .stSidebar > div,
+        .stSidebar > div > div {
+            background: linear-gradient(180deg, #232323 0%, #2c2c2c 100%) !important;
+        }
+        .stButton > button {
+            background: linear-gradient(135deg, #b8860b 0%, #e6b800 100%) !important;
+            color: #232323 !important;
+        }
+        .stButton > button:hover {
+            background: linear-gradient(135deg, #e6b800 0%, #b8860b 100%) !important;
+        }
+        div[data-testid="stChatInput"] {
+            background: linear-gradient(135deg, #232323 0%, #2c2c2c 100%) !important;
+            border: 1px solid #b8860b !important;
+        }
+        div[data-testid="stChatInput"] textarea {
+            color: #ffe082 !important;
+        }
+        div[data-testid="stChatInput"] button {
+            background: linear-gradient(135deg, #b8860b 0%, #e6b800 100%) !important;
+            color: #232323 !important;
+        }
+        div[data-testid="stChatInput"] button:hover {
+            background: linear-gradient(135deg, #e6b800 0%, #b8860b 100%) !important;
+        }
+        div[data-testid="stChatInput"] button svg {
+            fill: #232323 !important;
+        }
+        .main > div,
+        [data-testid="stAppViewBlockContainer"],
+        section[data-testid="stChatFlowMessage"],
+        .stBottom,
+        .stBottom > div {
+            background-color: transparent !important;
+            background: transparent !important;
         }
     }
 </style>
@@ -167,7 +334,7 @@ def create_new_conversation(sql_manager):
         st.session_state.chat_history_manager = chat_manager
         st.session_state.messages = []
         
-        st.success("새 대화가 시작되었습니다!")
+        st.success("새로운 제빵 상담이 시작되었습니다!")
         st.rerun()
         
     except Exception as e:
@@ -191,7 +358,7 @@ def load_conversation(session_id, sql_manager):
         st.session_state.chat_history_manager = chat_manager
         st.session_state.messages = messages
         
-        st.success(f"대화를 불러왔습니다! ({len(messages)}개 메시지)")
+        st.success(f"제빵 상담 기록을 불러왔습니다! ({len(messages)}개 메시지)")
         st.rerun()
         
     except Exception as e:
@@ -214,28 +381,28 @@ def delete_conversation_by_id(session_id, sql_manager):
                 st.session_state.chat_history_manager = None
                 st.session_state.messages = []
             
-            st.success("대화가 삭제되었습니다!")
+            st.success("상담 기록이 삭제되었습니다!")
             st.rerun()
         else:
-            st.error("대화 삭제에 실패했습니다.")
+            st.error("상담 기록 삭제에 실패했습니다.")
             
     except Exception as e:
-        st.error(f"대화 삭제 오류: {str(e)}")
+        st.error(f"상담 기록 삭제 오류: {str(e)}")
 
 
 def render_sidebar(sql_manager):
     """사이드바 렌더링"""
     with st.sidebar:
-        st.header("🗨️ 대화 관리")
+        st.header("🥖 제빵 상담 관리")
         
         # 새 대화 버튼
-        if st.button("🆕 새 대화 시작", use_container_width=True):
+        if st.button("🆕 새 제빵 상담 시작", use_container_width=True):
             create_new_conversation(sql_manager)
         
         st.divider()
         
         # 대화 목록
-        st.subheader("📋 대화 기록")
+        st.subheader("📝 상담 기록")
         
         try:
             conversations = sql_manager.get_conversations(limit=20)
@@ -275,7 +442,7 @@ def render_sidebar(sql_manager):
                             if st.button(
                                 "🗑️", 
                                 key=f"delete_{session_id}",
-                                help="대화 삭제",
+                                help="상담 기록 삭제",
                                 use_container_width=True
                             ):
                                 st.session_state[confirm_key] = True
@@ -305,10 +472,10 @@ def render_sidebar(sql_manager):
                                     st.session_state[confirm_key] = False
                                     st.rerun()
             else:
-                st.info("저장된 대화가 없습니다.")
+                st.info("저장된 상담 기록이 없습니다.")
                 
         except Exception as e:
-            st.error(f"대화 목록 로드 오류: {str(e)}")
+            st.error(f"상담 기록 목록 로드 오류: {str(e)}")
         
         st.divider()
         
@@ -317,14 +484,14 @@ def render_sidebar(sql_manager):
         
         # 소스 표시 토글
         st.checkbox(
-            "검색된 문서 소스 표시", 
+            "제빵 자료 출처 표시", 
             key="show_sources"
         )
         
         # 시스템 정보
         with st.expander("ℹ️ 시스템 정보"):
             if st.session_state.current_session_id:
-                st.write(f"**현재 세션:** {st.session_state.current_session_id[:8]}...")
+                st.write(f"**현재 상담 세션:** {st.session_state.current_session_id[:8]}...")
             
             if st.session_state.chat_history_manager:
                 summary = st.session_state.chat_history_manager.get_conversation_summary()
@@ -334,11 +501,11 @@ def render_sidebar(sql_manager):
 
 def render_chat_interface(llm_manager, retriever_manager):
     """채팅 인터페이스 렌더링"""
-    st.header("🤖 RAG Chat Assistant")
+    st.header("🍞 제과제빵 상담 어시스턴트")
     
     # 세션이 없으면 안내 메시지
     if not st.session_state.current_session_id:
-        st.info("👈 사이드바에서 '새 대화 시작'을 클릭하여 대화를 시작하세요.")
+        st.info("👈 사이드바에서 '새 제빵 상담 시작'을 클릭하여 상담을 시작하세요.")
         return
     
     # 메시지 표시 영역
@@ -355,14 +522,14 @@ def render_chat_interface(llm_manager, retriever_manager):
             if role == "user":
                 st.markdown(f"""
                 <div class="chat-message user-message">
-                    <div class="message-header">👤 사용자 {formatted_timestamp}</div>
+                    <div class="message-header">👨‍🍳 제빵사 {formatted_timestamp}</div>
                     <div>{content}</div>
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown(f"""
                 <div class="chat-message assistant-message">
-                    <div class="message-header">🤖 AI 어시스턴트 {formatted_timestamp}</div>
+                    <div class="message-header">🍞 빵지니 {formatted_timestamp}</div>
                     <div>{content}</div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -370,19 +537,19 @@ def render_chat_interface(llm_manager, retriever_manager):
                 # 소스 정보 표시 (설정이 켜져 있고 소스가 있는 경우)
                 if st.session_state.show_sources and metadata and metadata.get("sources"):
                     sources = metadata["sources"]
-                    with st.expander(f"📄 참조 문서 ({len(sources)}개)", expanded=False):
+                    with st.expander(f"📚 참조 제빵 자료 ({len(sources)}개)", expanded=False):
                         for source in sources:
                             st.write(f"• {source}")
     
     # 사용자 입력
-    user_input = st.chat_input("질문을 입력하세요...")
+    user_input = st.chat_input("제빵에 관한 질문을 입력하세요...")
     
     if user_input and st.session_state.chat_history_manager:
         # 사용자 메시지 추가
         st.session_state.chat_history_manager.add_user_message(user_input)
         
         # 검색 수행
-        with st.spinner("문서를 검색하고 답변을 생성하는 중..."):
+        with st.spinner("제빵 관련 문서를 검색하고 답변을 준비하는 중..."):
             try:
                 # 문서 검색
                 documents = retriever_manager.search_documents(user_input)
@@ -410,7 +577,7 @@ def render_chat_interface(llm_manager, retriever_manager):
                 st.rerun()
                 
             except Exception as e:
-                st.error(f"응답 생성 오류: {str(e)}")
+                st.error(f"제빵 상담 응답 생성 오류: {str(e)}")
 
 
 def main():
