@@ -52,16 +52,20 @@ st.markdown("""
         display: flex;
         flex-direction: column;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background: linear-gradient(135deg, #f7f3e9 0%, #f0e6d6 100%);
+        color: #8b4513;
     }
     .user-message {
         background: linear-gradient(135deg, #f7f3e9 0%, #f0e6d6 100%);
         margin-left: 20%;
         border-left: 4px solid #d4aa7d;
+        color: #8b4513;
     }
     .assistant-message {
         background: linear-gradient(135deg, #f4e4bc 0%, #e8d5a3 100%);
         margin-right: 20%;
         border-left: 4px solid #b8860b;
+        color: #8b4513;
     }
     .message-header {
         font-weight: bold;
@@ -96,8 +100,6 @@ st.markdown("""
         transform: translateY(-1px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
-    
-    /* 채팅 입력창 전체 영역 배경 제거 */
     .stChatFloatingInputContainer {
         background-color: transparent !important;
         background: transparent !important;
@@ -106,18 +108,6 @@ st.markdown("""
         background-color: transparent !important;
         background: transparent !important;
     }
-    
-    /* 채팅 입력창 wrapper 배경 제거 */
-    div[data-testid="stChatInput"] {
-        background-color: transparent !important;
-        background: transparent !important;
-    }
-    div[data-testid="stChatInput"] > div {
-        background-color: transparent !important;
-        background: transparent !important;
-    }
-    
-    /* 채팅 입력창 전체 컨테이너 */
     div[data-testid="stChatInput"] {
         border-radius: 1.5rem !important;
         overflow: visible !important;
@@ -129,8 +119,6 @@ st.markdown("""
         display: flex !important;
         align-items: center !important;
     }
-    
-    /* 모든 중간 div들 투명하게 */
     div[data-testid="stChatInput"] > div,
     div[data-testid="stChatInput"] > div > div,
     div[data-testid="stChatInput"] > div > div > div,
@@ -142,8 +130,6 @@ st.markdown("""
         display: flex !important;
         align-items: center !important;
     }
-    
-    /* form 요소 스타일 */
     div[data-testid="stChatInput"] form {
         background: transparent !important;
         border: none !important;
@@ -155,8 +141,6 @@ st.markdown("""
         box-sizing: border-box !important;
         margin: 0 !important;
     }
-    
-    /* 텍스트 입력 필드 */
     div[data-testid="stChatInput"] textarea {
         background: transparent !important;
         border: none !important;
@@ -173,8 +157,6 @@ st.markdown("""
         align-items: center !important;
         font-size: 1rem !important;
     }
-    
-    /* 전송 버튼 */
     div[data-testid="stChatInput"] button {
         background: linear-gradient(135deg, #e6b800 0%, #d4aa7d 100%) !important;
         color: white !important;
@@ -196,13 +178,9 @@ st.markdown("""
     div[data-testid="stChatInput"] button:hover {
         background: linear-gradient(135deg, #d4aa7d 0%, #b8860b 100%) !important;
     }
-    
-    /* 버튼 SVG 아이콘 색상 */
     div[data-testid="stChatInput"] button svg {
         fill: white !important;
     }
-    
-    /* 모든 중간 컨테이너 배경 제거 */
     .main > div {
         background-color: transparent !important;
     }
@@ -212,8 +190,6 @@ st.markdown("""
     section[data-testid="stChatFlowMessage"] {
         background-color: transparent !important;
     }
-    
-    /* stBottom 영역 배경 제거 */
     .stBottom {
         background-color: transparent !important;
         background: transparent !important;
@@ -226,39 +202,64 @@ st.markdown("""
     /* 다크모드 감지 및 적용 */
     @media (prefers-color-scheme: dark) {
         .chat-message {
-            background-color: #222 !important;
-            color: #f0f2f6 !important;
+            background: linear-gradient(135deg, #232323 0%, #2c2c2c 100%) !important;
+            color: #f0e6d6 !important;
         }
         .user-message {
-            background-color: #333 !important;
-            color: #f0f2f6 !important;
+            background: linear-gradient(135deg, #232323 0%, #2c2c2c 100%) !important;
+            border-left: 4px solid #b8860b !important;
+            color: #f0e6d6 !important;
         }
         .assistant-message {
-            background-color: #2a3b4d !important;
-            color: #f0f2f6 !important;
+            background: linear-gradient(135deg, #4d392a 0%, #3b301e 100%) !important;
+            border-left: 4px solid #e6b800 !important;
+            color: #f0e6d6 !important;
         }
         .message-header {
-            color: #90caf9 !important;
+            color: #ffe082 !important;
         }
         .stApp > header {
             background-color: transparent;
         }
-        /* 다크모드 채팅 입력창 */
+        .stApp {
+            background: linear-gradient(180deg, #232323 0%, #2c2c2c 100%) !important;
+        }
+        .stSidebar,
+        .stSidebar > div,
+        .stSidebar > div > div {
+            background: linear-gradient(180deg, #232323 0%, #2c2c2c 100%) !important;
+        }
+        .stButton > button {
+            background: linear-gradient(135deg, #b8860b 0%, #e6b800 100%) !important;
+            color: #232323 !important;
+        }
+        .stButton > button:hover {
+            background: linear-gradient(135deg, #e6b800 0%, #b8860b 100%) !important;
+        }
         div[data-testid="stChatInput"] {
-            background: #2a2a2a !important;
-            border: 1px solid #444 !important;
+            background: linear-gradient(135deg, #232323 0%, #2c2c2c 100%) !important;
+            border: 1px solid #b8860b !important;
         }
         div[data-testid="stChatInput"] textarea {
-            color: #f0f2f6 !important;
+            color: #ffe082 !important;
         }
         div[data-testid="stChatInput"] button {
-            background: #4a4a4a !important;
+            background: linear-gradient(135deg, #b8860b 0%, #e6b800 100%) !important;
+            color: #232323 !important;
         }
         div[data-testid="stChatInput"] button:hover {
-            background: #555 !important;
+            background: linear-gradient(135deg, #e6b800 0%, #b8860b 100%) !important;
         }
         div[data-testid="stChatInput"] button svg {
-            fill: white !important;
+            fill: #232323 !important;
+        }
+        .main > div,
+        [data-testid="stAppViewBlockContainer"],
+        section[data-testid="stChatFlowMessage"],
+        .stBottom,
+        .stBottom > div {
+            background-color: transparent !important;
+            background: transparent !important;
         }
     }
 </style>
