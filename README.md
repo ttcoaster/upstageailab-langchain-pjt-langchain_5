@@ -13,6 +13,40 @@
 
 <br>
 
+<br>
+
+QA Engine 한눈에 보기 (개념 & 목표)
+개념
+
+QA Engine은 문서 기반 질의응답 시스템입니다.
+
+사용자가 질문하면, 사전에 구축해 둔 **Knowledge Base(KB)**에서 관련 조각을 **검색(Retrieval)**하고, 그 근거를 바탕으로 LLM이 **답변(Generation)**을 생성합니다.
+
+이 전체 과정을 RAG (Retrieval-Augmented Generation) 파이프라인으로 구현합니다.
+
+이번 프로젝트에서 구축/구현할 핵심 목표
+
+문서 수집/로더: PDF 등에서 텍스트 추출
+
+전처리/청크 분할: 다양한 chunking 전략 실험 가능하게 설계
+
+임베딩 & 벡터 스토어: Upstage Embeddings + FAISS 인덱스 구축/로드
+
+리트리버: Top-K 검색 (+추후 BM25/리랭커 확장 고려)
+
+프롬프트 구성 & 생성: 컨텍스트 주입, 인용/출처 표시, “모르면 모른다고” 가드
+
+평가/로그: LangSmith를 활용한 프롬프트/청크/리트리버 실험 A/B, 최소 스모크 테스트
+
+엔드투엔드 실행: 인덱싱 → 질의 → 답변까지 한 번에 실행
+
+<br>
+
+
+
+
+
+
 ## 👨‍👩‍👦‍👦 팀 구성원
 
 | ![류지헌](https://avatars.githubusercontent.com/u/10584296?v=4) | ![김태현](https://avatars.githubusercontent.com/u/7031901?v=4) | ![박진섭](https://avatars.githubusercontent.com/u/208775216?v=4) | ![문진숙](https://avatars.githubusercontent.com/u/204665219?v=4) | ![김재덕](https://avatars.githubusercontent.com/u/33456585?v=4) |
