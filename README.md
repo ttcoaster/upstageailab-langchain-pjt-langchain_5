@@ -209,7 +209,7 @@ flowchart TD
 
 
 ## 📰​ 참고자료
-- [![Q-NET 제과기능사]](https://www.q-net.or.kr/crf005.do?id=crf00503&jmCd=7892)
+- [Q-NET 제과기능사](https://www.q-net.or.kr/crf005.do?id=crf00503&jmCd=7892)
 
 ---
 
