@@ -12,6 +12,7 @@ dependencies = [
     "langchain-openai>=0.3.30",
     "langchain-text-splitters>=0.3.9",
     "langchain-upstage>=0.7.2",
+    "langsmith>=0.4.15",
     "pymupdf>=1.26.3",
     "python-dotenv>=1.1.1",
     "pytz>=2025.2",
