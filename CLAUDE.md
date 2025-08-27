@@ -1,1 +1,2 @@
 - pip 대신에 uv add 를 사용하고, python 대신에 uv run python 을 사용해라.
+- 특정 함수를 테스트를 할때는 code/tests에 pytest용 테스트 코드를 작성해서 테스트해라.

@@ -1,56 +1,49 @@
 import os
 from dotenv import load_dotenv
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import PyMuPDFLoader
-from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_upstage import ChatUpstage
 from langchain_upstage import UpstageEmbeddings
-import utils.log_util as log
  
 # 현재 스크립트 위치를 작업 디렉토리로 설정
-import sys
 from pathlib import Path
 script_dir = Path(__file__).parent.absolute()
 os.chdir(script_dir)
+
+import log_util as log
+from vector_store import VectorStoreManager
 
 # 환경변수 로드
 load_dotenv()
 log.info("환경변수가 성공적으로 로드되었습니다.")
 
 
-# 단계 1: 문서 로드(Load Documents)
-log.info("PDF 문서를 로드하는 중...")
-loader = PyMuPDFLoader("../data/SPRI_AI_Brief_2023년12월호_F.pdf")
-# loader = PyMuPDFLoader("../data/4.단팥빵(비상스트레이트법).pdf")
-docs = loader.load()
-log.info(f"로드된 문서 수: {len(docs)}")
-log.info(f"첫 번째 문서 미리보기: {docs[0].page_content[:200]}...")
-
-# 단계 2: 문서 분할(Split Documents)
-log.info("문서를 청크로 분할하는 중...")
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
-split_documents = text_splitter.split_documents(docs)
-log.info(f"분할된 문서 청크 수: {len(split_documents)}")
-log.info(f"첫 번째 청크 미리보기: {split_documents[0].page_content[:200]}...")
-
-# 단계 3: 임베딩(Embedding) 생성
+# 단계 1-3: 임베딩(Embedding) 생성
 log.info("임베딩 모델을 초기화하는 중...")
-# embeddings = OpenAIEmbeddings()
 embeddings = UpstageEmbeddings(
     api_key=os.getenv("UPSTAGE_API_KEY"),
     model="embedding-query"
 )
 log.info("임베딩 모델이 성공적으로 초기화되었습니다.")
 
-# 단계 4: DB 생성(Create DB) 및 저장
-log.info("벡터 데이터베이스를 생성하는 중...")
-# 벡터스토어를 생성합니다.
-vectorstore = FAISS.from_documents(documents=split_documents, embedding=embeddings)
+# 단계 4: 벡터스토어 관리자 생성 및 벡터스토어 로드/생성
+log.info("벡터스토어 관리자를 초기화하는 중...")
+vector_manager = VectorStoreManager(
+    pdf_dir="../../data/pdf",
+    vectorstore_dir="../../data/vectorstore", 
+    embeddings=embeddings,
+    chunk_size=1000,
+    chunk_overlap=50
+)
+
+# 벡터스토어 가져오기 (기존 로드 또는 새로 생성, 증분 업데이트 자동 처리)
+vectorstore = vector_manager.get_or_create_vectorstore()
+
+if vectorstore is None:
+    log.error("벡터스토어를 생성하거나 로드할 수 없습니다.")
+    exit(1)
 
 # 단계 5: 검색기(Retriever) 생성
-# 문서에 포함되어 있는 정보를 검색하고 생성합니다.
 retriever = vectorstore.as_retriever()
 log.info("벡터 데이터베이스와 검색기가 성공적으로 생성되었습니다.")
 
@@ -70,8 +63,6 @@ log.info("프롬프트 템플릿이 생성되었습니다.")
 
 # 단계 7: 언어모델(LLM) 생성
 log.info("언어모델을 초기화하는 중...")
-# 모델(LLM) 을 생성합니다.
-# llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
 llm = ChatUpstage(
     api_key=os.getenv("UPSTAGE_API_KEY"),
     model="solar-pro2",
